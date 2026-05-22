@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ballistix Engine - Isometric Three.js</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0a0c14;
+            --primary-glow: #ff007f;
+            --secondary-glow: #00f0ff;
+            --glass-bg: rgba(15, 18, 30, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-glow: rgba(0, 240, 255, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        /* 3D Canvas Container */
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Glassmorphic UI HUD Layout */
+        .hud {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none; /* Let clicks pass through to 3D if needed */
+        }
+
+        /* Header UI */
+        header.hud {
+            top: 30px;
+            left: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        .logo-dot {
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--primary-glow);
+            animation: pulse 2s infinite alternate;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #ffffff, #8b9bb4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: #707e94;
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Control / Keyboard HUD Overlay */
+        .control-panel.hud {
+            bottom: 30px;
+            right: 30px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 24px;
+            border-radius: 16px;
+            width: 320px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #a0aec0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        /* Keycaps Visualizer grid */
+        .keyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            justify-items: center;
+        }
+
+        .key-indicator {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #718096;
+            transition: all 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Key States when Active */
+        .key-indicator.active {
+            color: #ffffff;
+            border-color: var(--secondary-glow);
+            background: rgba(0, 240, 255, 0.15);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), inset 0 0 4px rgba(0, 240, 255, 0.6);
+            transform: scale(0.95) translateY(1px);
+        }
+
+        .key-indicator.active-primary {
+            color: #ffffff;
+            border-color: var(--primary-glow);
+            background: rgba(255, 0, 127, 0.15);
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4), inset 0 0 4px rgba(255, 0, 127, 0.6);
+            transform: scale(0.95) translateY(1px);
+        }
+
+        /* Spacebar representation */
+        .space-container {
+            grid-column: span 4;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 4px;
+        }
+
+        .key-indicator.space {
+            width: 80%;
+            height: 38px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        /* Technical Stats HUD */
+        .stats-panel.hud {
+            bottom: 30px;
+            left: 30px;
+            background: rgba(15, 18, 30, 0.4);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #718096;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-item {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        .stat-val {
+            color: var(--secondary-glow);
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* Instructions overlay */
+        .instructions.hud {
+            top: 30px;
+            right: 30px;
+            text-align: right;
+            max-width: 250px;
+        }
+
+        .instruction-tag {
+            background: rgba(0, 240, 255, 0.08);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--secondary-glow);
+            display: inline-block;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .instruction-text {
+            font-size: 0.85rem;
+            color: #a0aec0;
+            line-height: 1.4;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Center Top Score HUD */
+        .score-container.hud {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 10px 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .life-panel {
+            transition: all 0.3s ease;
+        }
+
+        .life-panel.dead {
+            opacity: 0.25;
+            color: #4a5568 !important;
+            text-decoration: line-through;
+        }
+
+        .life-panel.dead .life-val {
+            text-shadow: none !important;
+        }
+
+        /* Game Switcher Selector Styling */
+        .game-select-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 6px;
+            background: rgba(15, 18, 30, 0.4);
+            padding: 4px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: fit-content;
+            pointer-events: auto;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .switch-btn {
+            background: none;
+            border: none;
+            color: #a0aec0;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .switch-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .switch-btn.active {
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+        }
+
+        /* Hide elements on tiny mobile screens, keeping canvas clean */
+        @media (max-width: 600px) {
+            .control-panel.hud, .instructions.hud {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Start Launcher Menu Overlay -->
+    <div id="menu-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(8, 10, 18, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); transition: opacity 0.6s ease; pointer-events: auto;">
+        <div style="text-align: center; padding: 50px 60px; border-radius: 28px; background: rgba(15, 18, 30, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1); max-width: 500px; width: 90%; transform: scale(1.0); transition: transform 0.4s ease;">
+            
+            <!-- Logo/Pulse -->
+            <div style="display: flex; justify-content: center; align-items: center; gap: 14px; margin-bottom: 20px;">
+                <div style="width: 16px; height: 16px; background: linear-gradient(135deg, #ff007f, #00f0ff); border-radius: 50%; box-shadow: 0 0 20px #ff007f; animation: pulse 1.5s infinite alternate;"></div>
+                <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 2.8rem; font-weight: 800; letter-spacing: 3px; background: linear-gradient(135deg, #ffffff, #a0aec0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; text-transform: uppercase;">Arcadia</h2>
+            </div>
+            
+            <p style="font-size: 0.95rem; color: #a0aec0; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 35px;">Three.js Isometric Arena</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button onclick="window.switchMinigame('ballistix')" style="pointer-events: auto; cursor: pointer; background: linear-gradient(135deg, #00f0ff, #0072ff); border: none; color: white; padding: 16px 36px; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; border-radius: 30px; box-shadow: 0 0 20px rgba(0, 240, 255, 0.3); transition: all 0.3s ease;">
+                    Play Ballistix
+                </button>
+                <button onclick="window.switchMinigame('dragondrop')" style="pointer-events: auto; cursor: pointer; background: linear-gradient(135deg, #ff007f, #b026ff); border: none; color: white; padding: 16px 36px; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; border-radius: 30px; box-shadow: 0 0 20px rgba(255, 0, 127, 0.3); transition: all 0.3s ease;">
+                    Play Dragon Drop
+                </button>
+            </div>
+            
+            <p style="font-size: 0.75rem; color: #718096; margin-top: 35px; line-height: 1.5;">
+                Select a game to start playing. You can switch games anytime using the menu in the top-left corner.
+            </p>
+        </div>
+    </div>
+
+    <!-- 4-Player Lives HUD -->
+    <div class="score-container hud" style="width: 540px; display: none;">
+        <div class="lives-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); width: 100%; gap: 20px; text-align: center; pointer-events: none;">
+            <div class="life-panel" id="life-player" style="color: #00f0ff;">
+                <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2px;">Player 1</div>
+                <div class="life-val" id="life-val-player" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 800; text-shadow: 0 0 12px rgba(0, 240, 255, 0.5); line-height: 1;">15</div>
+            </div>
+            <div class="life-panel" id="life-top" style="color: #ffbb00;">
+                <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2px;">Top AI</div>
+                <div class="life-val" id="life-val-top" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 800; text-shadow: 0 0 12px rgba(255, 187, 0, 0.5); line-height: 1;">15</div>
+            </div>
+            <div class="life-panel" id="life-left" style="color: #39ff14;">
+                <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2px;">Left AI</div>
+                <div class="life-val" id="life-val-left" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 800; text-shadow: 0 0 12px rgba(57, 255, 20, 0.5); line-height: 1;">15</div>
+            </div>
+            <div class="life-panel" id="life-right" style="color: #b026ff;">
+                <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2px;">Right AI</div>
+                <div class="life-val" id="life-val-right" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; font-weight: 800; text-shadow: 0 0 12px rgba(176, 38, 255, 0.5); line-height: 1;">15</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Header HUD -->
+    <header class="hud">
+        <div class="logo-container">
+            <div class="logo-dot"></div>
+            <h1 id="engine-title">Ballistix</h1>
+        </div>
+        <div class="subtitle">Three.js Isometric Core</div>
+        
+        <!-- Game Switcher Selector -->
+        <div class="game-select-container">
+            <button id="btn-play-ballistix" class="switch-btn">Ballistix</button>
+            <button id="btn-play-dragondrop" class="switch-btn">Dragon Drop</button>
+        </div>
+    </header>
+
+    <!-- Instructions HUD -->
+    <div class="instructions hud">
+        <div class="instruction-tag">Standby</div>
+        <div class="instruction-text">
+            Please choose a minigame to play from the main menu.
+        </div>
+    </div>
+
+    <!-- Stats HUD -->
+    <div class="stats-panel hud">
+        <div class="stat-item">
+            <span>Camera Angle:</span>
+            <span class="stat-val">Isometric (45° Yaw/Pitch)</span>
+        </div>
+        <div class="stat-item">
+            <span>Renderer API:</span>
+            <span class="stat-val">WebGL2 / PCFSoftShadows</span>
+        </div>
+        <div class="stat-item">
+            <span>Engine Status:</span>
+            <span class="stat-val" style="color: #48bb78;">Active</span>
+        </div>
+    </div>
+
+    <!-- Keyboard Visualizer Panel HUD -->
+    <div class="control-panel hud" style="display: none;">
+        <div class="panel-title">Real-Time Input Link</div>
+        
+        <div class="keyboard-grid">
+            <!-- WASD Row 1 -->
+            <div class="key-indicator" id="key-q" style="opacity: 0.25;">Q</div>
+            <div class="key-indicator" id="key-w">W</div>
+            <div class="key-indicator" id="key-e" style="opacity: 0.25;">E</div>
+            <div class="key-indicator" id="key-arrowup">↑</div>
+
+            <!-- WASD Row 2 -->
+            <div class="key-indicator" id="key-a">A</div>
+            <div class="key-indicator" id="key-s">S</div>
+            <div class="key-indicator" id="key-d">D</div>
+            <div class="key-indicator" id="key-arrowdown">↓</div>
+
+            <!-- Arrow Left / Right -->
+            <div class="key-indicator" id="key-arrowleft" style="grid-column: 2;">←</div>
+            <div class="key-indicator" id="key-arrowright" style="grid-column: 3;">→</div>
+
+            <!-- Space -->
+            <div class="space-container">
+                <div class="key-indicator space" id="key-space">Spacebar</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Setup module loading -->
+    <script type="module" src="./engine.js"></script>
+    <script type="module" src="./ballistix.js"></script>
+    <script type="module" src="./dragondrop.js"></script>
+
+    <!-- Key HUD linking script -->
+    <script>
+        // Update HUD display based on keyboard inputs monitored by engine.js
+        window.addEventListener('engine-input-change', (e) => {
+            const { key, pressed } = e.detail;
+            
+            // Map the inputs key fields to DOM IDs
+            let domId = null;
+            let isSpace = false;
+            
+            switch(key) {
+                case 'w': domId = 'key-w'; break;
+                case 'a': domId = 'key-a'; break;
+                case 's': domId = 'key-s'; break;
+                case 'd': domId = 'key-d'; break;
+                case 'ArrowUp': domId = 'key-arrowup'; break;
+                case 'ArrowDown': domId = 'key-arrowdown'; break;
+                case 'ArrowLeft': domId = 'key-arrowleft'; break;
+                case 'ArrowRight': domId = 'key-arrowright'; break;
+                case 'Space': 
+                    domId = 'key-space'; 
+                    isSpace = true;
+                    break;
+            }
+
+            if (domId) {
+                const element = document.getElementById(domId);
+                if (element) {
+                    if (pressed) {
+                        if (isSpace) {
+                            element.classList.add('active-primary');
+                        } else {
+                            element.classList.add('active');
+                        }
+                    } else {
+                        element.classList.remove('active');
+                        element.classList.remove('active-primary');
+                    }
+                }
+            }
+        });
+
+        // Attach event listeners to switcher buttons
+        document.getElementById('btn-play-ballistix').addEventListener('click', () => {
+            if (typeof window.switchMinigame === 'function') {
+                window.switchMinigame('ballistix');
+            }
+        });
+        document.getElementById('btn-play-dragondrop').addEventListener('click', () => {
+            if (typeof window.switchMinigame === 'function') {
+                window.switchMinigame('dragondrop');
+            }
+        });
+    </script>
+</body>
+</html>
