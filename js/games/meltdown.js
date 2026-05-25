@@ -411,7 +411,7 @@ export class MeltDownGame {
         if (this.isGameOver) return;
         this.isGameOver = true;
 
-        const winnerName = winnerId === 0 ? "Player 1" : (winnerId > 0 ? \`AI Bot \${winnerId}\` : "Nobody");
+        const winnerName = winnerId === 0 ? "Player 1" : (winnerId > 0 ? `AI Bot ${winnerId}` : "Nobody");
         const winnerColor = winnerId === 0 ? '#ff3333' : '#aaaaaa';
 
         const overlay = document.createElement('div');
@@ -430,14 +430,14 @@ export class MeltDownGame {
         overlay.style.color = '#fff';
         overlay.style.fontFamily = "'Outfit', sans-serif";
 
-        overlay.innerHTML = \`
-            <h1 style="font-size: 4rem; margin-bottom: 10px; text-shadow: 0 0 20px \${winnerColor}; color: \${winnerColor}">MELTDOWN CHAMPION!</h1>
-            <h2 style="font-size: 2rem; margin-bottom: 30px;">\${winnerName} avoided the sweep!</h2>
+        overlay.innerHTML = `
+            <h1 style="font-size: 4rem; margin-bottom: 10px; text-shadow: 0 0 20px ${winnerColor}; color: ${winnerColor}">MELTDOWN CHAMPION!</h1>
+            <h2 style="font-size: 2rem; margin-bottom: 30px;">${winnerName} avoided the sweep!</h2>
             <div style="display: flex; gap: 20px;">
                 <button id="btn-replay" class="menu-btn primary-btn" style="width: 200px;">Play Again</button>
                 <button id="btn-exit" class="menu-btn" style="width: 200px;">Exit to Launcher</button>
             </div>
-        \`;
+        `;
 
         document.body.appendChild(overlay);
 

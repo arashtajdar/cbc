@@ -40,7 +40,7 @@
                 <button onclick="window.toggleSettingsModal(true)" class="menu-btn">
                     Settings
                 </button>
-                <button class="menu-btn disabled-btn">
+                <button id="exit-btn" class="menu-btn disabled-btn" onclick="if(window.electronAPI){ window.electronAPI.quitApp(); }">
                     Exit (Disabled on Web)
                 </button>
             </div>
@@ -421,6 +421,15 @@
                 window.switchMinigame('sweeper');
             }
         });
+
+        // Dynamic Native (Electron) UI Adjustments
+        if (window.electronAPI) {
+            const exitBtn = document.getElementById('exit-btn');
+            if (exitBtn) {
+                exitBtn.classList.remove('disabled-btn');
+                exitBtn.textContent = 'Exit Game';
+            }
+        }
     </script>
 </body>
 </html>
