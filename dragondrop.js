@@ -452,22 +452,48 @@ class DragonDropGame {
                 const dirX = moveX / len;
                 const dirZ = moveZ / len;
 
-                // Rotational coordinate mapping for clean isometric movement
-                const rad = -Math.PI / 4;
-                const isoX = dirX * Math.cos(rad) - dirZ * Math.sin(rad);
-                const isoZ = dirX * Math.sin(rad) + dirZ * Math.cos(rad);
+                // Convert screen inputs (WASD) into local isometric space for the rotated arenaGroup.
+                // Screen Right (dirX = 1) maps to Local -Z.
+                // Screen Up (dirZ = -1) maps to Local -X.
+                const isoX = dirZ;
+                const isoZ = -dirX;
 
-                this.player.position.x += isoX * movementSpeed * dt;
-                this.player.position.z += isoZ * movementSpeed * dt;
+                // Smoothly rotate the player box to face the direction of flight
+                const targetRotation = Math.atan2(-isoZ, isoX);
+                let currentRotation = this.player.rotation.y;
+                let angleDiff = targetRotation - currentRotation;
+                
+                // Normalize angle difference to [-PI, PI]
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+                const turnRate = 8.0 * dt; // radians per second
+                if (Math.abs(angleDiff) <= turnRate) {
+                    this.player.rotation.y = targetRotation;
+                } else {
+                    this.player.rotation.y += Math.sign(angleDiff) * turnRate;
+                }
+
+                // Keep rotation normalized
+                while (this.player.rotation.y < -Math.PI) this.player.rotation.y += Math.PI * 2;
+                while (this.player.rotation.y > Math.PI) this.player.rotation.y -= Math.PI * 2;
+
+                // Calculate alignment to scale speed (don't move if facing far away from target)
+                const alignment = Math.max(0, Math.cos(angleDiff));
+                
+                // Move forward in the CURRENT facing direction
+                const forwardX = Math.cos(this.player.rotation.y);
+                const forwardZ = -Math.sin(this.player.rotation.y);
+                
+                const speed = 9.0 * alignment; // Slower speed, scaled by alignment
+
+                this.player.position.x += forwardX * speed * dt;
+                this.player.position.z += forwardZ * speed * dt;
 
                 // Floor boundary clamps (size 40 arena)
                 const limit = 19.0;
                 this.player.position.x = Math.max(-limit, Math.min(limit, this.player.position.x));
                 this.player.position.z = Math.max(-limit, Math.min(limit, this.player.position.z));
-
-                // Smoothly rotate the player box to face the direction of flight
-                const targetRotation = Math.atan2(-isoZ, isoX);
-                this.player.rotation.y = THREE.MathUtils.lerp(this.player.rotation.y, targetRotation, 0.15);
             }
 
             // --- 4. Constantly Track Concentric Score Zone and Multiplier ---
