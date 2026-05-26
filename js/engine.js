@@ -448,7 +448,8 @@ function animate() {
 }
 
 // Start engine setup
-window.addEventListener('DOMContentLoaded', init);
+// Event listener removed to avoid duplicate initialization with direct call
+
 
 // --- 4. STATE MACHINE TRANSITIONS & UI BUILDERS ---
 
@@ -1306,4 +1307,4 @@ init();
 window.toggleSettingsModal = toggleSettingsModal;
 window.cyclePlayerCharacter = cyclePlayerCharacter;
 window.closeLockedModal = closeLockedModal;
-window.toggleSettingsModal = toggleSettingsModal;
+
