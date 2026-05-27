@@ -1,7 +1,7 @@
 /**
  * TANK MAYHEM gameplay logic
  * Standalone Three.js minigame class for "Tank Mayhem".
- * 
+ *
  * Features:
  * - Miniature AABB destructible maze arena.
  * - Dual-track tank steering movement physics.
@@ -18,7 +18,7 @@ class TankMayhemGame {
         this.playerColor = playerColor !== undefined ? playerColor : 0xff3333;
 
         this.gameOver = false;
-        
+
         // Groups & Pools
         this.arenaGroup = null;
         this.players = [];
@@ -31,21 +31,21 @@ class TankMayhemGame {
         // Maze Grid definition (11x11 grid)
         // #: Indestructible, D: Destructible, .: Empty, S: Spawn point
         this.mazeMap = [
-            "###########",
-            "#S...#...S#",
-            "#.D.#.#.D.#",
-            "#..D...D..#",
-            "##.#####.##",
-            "#....D....#",
-            "##.#####.##",
-            "#..D...D..#",
-            "#.D.#.#.D.#",
-            "#S...#...S#",
-            "###########"
+            '###########',
+            '#S...#...S#',
+            '#.D.#.#.D.#',
+            '#..D...D..#',
+            '##.#####.##',
+            '#....D....#',
+            '##.#####.##',
+            '#..D...D..#',
+            '#.D.#.#.D.#',
+            '#S...#...S#',
+            '###########'
         ];
         this.gridSize = 11;
         this.cellSize = 1.6;
-        this.gridOffset = (this.gridSize - 1) * this.cellSize / 2; // 8.0
+        this.gridOffset = ((this.gridSize - 1) * this.cellSize) / 2; // 8.0
 
         this.setup();
     }
@@ -53,7 +53,7 @@ class TankMayhemGame {
     setup() {
         const engine = window.engine;
         if (!engine) {
-            console.error("TankMayhem: engine.js not found in global context!");
+            console.error('TankMayhem: engine.js not found in global context!');
             return;
         }
 
@@ -68,7 +68,11 @@ class TankMayhemGame {
         engine.scene.add(this.arenaGroup);
 
         // 3. Floor slab
-        const floorGeo = new THREE.BoxGeometry(this.gridSize * this.cellSize, 0.2, this.gridSize * this.cellSize);
+        const floorGeo = new THREE.BoxGeometry(
+            this.gridSize * this.cellSize,
+            0.2,
+            this.gridSize * this.cellSize
+        );
         const floorMat = new THREE.MeshStandardMaterial({
             color: 0x111422, // Dark cyber blue floor
             roughness: 0.8,
@@ -101,7 +105,7 @@ class TankMayhemGame {
             for (let c = 0; c < this.gridSize; c++) {
                 const char = this.mazeMap[r][c];
                 if (char === '#' || char === 'D') {
-                    const isDestruct = (char === 'D');
+                    const isDestruct = char === 'D';
                     const color = isDestruct ? 0xcc6633 : 0x4a5263; // rusty brown vs concrete grey
                     const emissive = isDestruct ? 0x331100 : 0x111622;
                     const wallMat = new THREE.MeshStandardMaterial({
@@ -151,7 +155,7 @@ class TankMayhemGame {
             const charData = chars[charIdx];
             const start = startCoords[idx];
 
-            const isP1 = (idx === 0);
+            const isP1 = idx === 0;
             const pColor = isP1 ? this.playerColor : charData.color;
 
             // Assemble cute 3D Tank Mesh Group
@@ -190,7 +194,10 @@ class TankMayhemGame {
 
             // Barrel
             const barrelMat = new THREE.MeshStandardMaterial({ color: 0x8e9bb0, metalness: 0.8 });
-            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.45, 8), barrelMat);
+            const barrel = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.04, 0.04, 0.45, 8),
+                barrelMat
+            );
             barrel.rotation.z = Math.PI / 2; // points forward along positive X
             barrel.position.set(0.32, 0.45, 0);
             barrel.castShadow = true;
@@ -210,7 +217,7 @@ class TankMayhemGame {
 
             this.players.push({
                 id: idx + 1,
-                name: idx === 0 ? "Player 1" : `Opponent ${idx}`,
+                name: idx === 0 ? 'Player 1' : `Opponent ${idx}`,
                 mesh: tankGroup,
                 color: pColor,
                 hex: isP1 ? '#' + pColor.toString(16).padStart(6, '0') : charData.hex,
@@ -276,11 +283,12 @@ class TankMayhemGame {
         // Update layouts in standard instructions hud
         const instructionsText = document.querySelector('.instruction-text');
         if (instructionsText) {
-            instructionsText.textContent = "W/S to Drive. A/D to Steer Turret. Spacebar to FIRE. Projectiles bounce off concrete walls up to 2 times. Rusty walls are destructible!";
+            instructionsText.textContent =
+                'W/S to Drive. A/D to Steer Turret. Spacebar to FIRE. Projectiles bounce off concrete walls up to 2 times. Rusty walls are destructible!';
         }
         const instructionTag = document.querySelector('.instruction-tag');
         if (instructionTag) {
-            instructionTag.textContent = "Tank Mayhem";
+            instructionTag.textContent = 'Tank Mayhem';
         }
     }
 
@@ -293,7 +301,7 @@ class TankMayhemGame {
             if (p.isDead) {
                 if (card) card.style.opacity = '0.25';
                 if (hpBar) hpBar.style.width = '0%';
-                if (hpText) hpText.textContent = "KO";
+                if (hpText) hpText.textContent = 'KO';
             } else {
                 if (hpBar) {
                     const hpPercent = Math.max(0, p.health);
@@ -318,7 +326,7 @@ class TankMayhemGame {
 
         // Fracture block visual particles
         this.spawnFractureParticles(wall.mesh.position.x, 0.4, wall.mesh.position.z, 0xcc6633, 12);
-        this.showNotification("Rusty Wall Fractured!", "#cc6633");
+        this.showNotification('Rusty Wall Fractured!', '#cc6633');
     }
 
     checkWallCollision(x, z, radius) {
@@ -326,8 +334,13 @@ class TankMayhemGame {
             if (w.isDestroyed) continue;
             const wx = w.mesh.position.x;
             const wz = w.mesh.position.z;
-            const sizeLimit = (this.cellSize / 2) + radius - 0.05;
-            if (x > wx - sizeLimit && x < wx + sizeLimit && z > wz - sizeLimit && z < wz + sizeLimit) {
+            const sizeLimit = this.cellSize / 2 + radius - 0.05;
+            if (
+                x > wx - sizeLimit &&
+                x < wx + sizeLimit &&
+                z > wz - sizeLimit &&
+                z < wz + sizeLimit
+            ) {
                 return w; // Collides with this wall
             }
         }
@@ -338,7 +351,7 @@ class TankMayhemGame {
         if (player.activeBulletsCount >= 3) return;
 
         player.activeBulletsCount++;
-        
+
         // Spawn bullet from barrel tip
         // local barrel offset points forward on positive X by 0.55
         const localTip = new THREE.Vector3(0.55, 0.45, 0);
@@ -485,18 +498,18 @@ class TankMayhemGame {
                     } else {
                         const wx = hitWall.mesh.position.x;
                         const wz = hitWall.mesh.position.z;
-                        
-                        const fromLeft = (b.prevPos.x <= wx - wSize);
-                        const fromRight = (b.prevPos.x >= wx + wSize);
-                        const fromTop = (b.prevPos.z <= wz - wSize);
-                        const fromBottom = (b.prevPos.z >= wz + wSize);
+
+                        const fromLeft = b.prevPos.x <= wx - wSize;
+                        const fromRight = b.prevPos.x >= wx + wSize;
+                        const fromTop = b.prevPos.z <= wz - wSize;
+                        const fromBottom = b.prevPos.z >= wz + wSize;
 
                         if (fromLeft || fromRight) {
                             b.vx = -b.vx;
-                            b.mesh.position.x = fromLeft ? (wx - wSize - 0.05) : (wx + wSize + 0.05);
+                            b.mesh.position.x = fromLeft ? wx - wSize - 0.05 : wx + wSize + 0.05;
                         } else if (fromTop || fromBottom) {
                             b.vz = -b.vz;
-                            b.mesh.position.z = fromTop ? (wz - wSize - 0.05) : (wz + wSize + 0.05);
+                            b.mesh.position.z = fromTop ? wz - wSize - 0.05 : wz + wSize + 0.05;
                         } else {
                             // general corner reflection fallback
                             b.vx = -b.vx;
@@ -516,10 +529,17 @@ class TankMayhemGame {
                     if (p.isDead) continue;
 
                     const d = p.mesh.position.distanceTo(b.mesh.position);
-                    if (d < 0.45) { // hit radius
+                    if (d < 0.45) {
+                        // hit radius
                         p.health = Math.max(0, p.health - 25);
-                        this.spawnFractureParticles(b.mesh.position.x, 0.45, b.mesh.position.z, p.color, 8);
-                        
+                        this.spawnFractureParticles(
+                            b.mesh.position.x,
+                            0.45,
+                            b.mesh.position.z,
+                            p.color,
+                            8
+                        );
+
                         b.life = 0; // destroy bullet
                         break;
                     }
@@ -582,7 +602,7 @@ class TankMayhemGame {
 
                 if (dist < 10.0) {
                     const targetAngle = Math.atan2(-tdz, tdx);
-                    
+
                     // Rotate towards player slowly
                     let diff = targetAngle - ai.facingAngle;
                     while (diff < -Math.PI) diff += Math.PI * 2;
@@ -631,7 +651,9 @@ class TankMayhemGame {
 
             this.particles.push({
                 mesh,
-                vx, vy, vz,
+                vx,
+                vy,
+                vz,
                 life: 1.0,
                 decay: 2.5 + Math.random() * 1.5
             });
@@ -659,7 +681,9 @@ class TankMayhemGame {
 
             this.particles.push({
                 mesh,
-                vx, vy, vz,
+                vx,
+                vy,
+                vz,
                 life: 1.0,
                 decay: 1.8 + Math.random() * 1.2
             });
@@ -792,7 +816,7 @@ class TankMayhemGame {
         this.walls.forEach(w => {
             if (w.isDestructible && w.isDestroyed) {
                 w.isDestroyed = false;
-                
+
                 const color = 0xcc6633;
                 const wallMat = new THREE.MeshStandardMaterial({
                     color: color,
@@ -868,13 +892,13 @@ class TankMayhemGame {
         notif.style.backdropFilter = 'blur(10px)';
         notif.style.webkitBackdropFilter = 'blur(10px)';
         notif.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        
+
         document.body.appendChild(notif);
         notif.offsetHeight; // force reflow
-        
+
         notif.style.opacity = '1';
         notif.style.transform = 'translateX(-50%) scale(1.0)';
-        
+
         setTimeout(() => {
             notif.style.opacity = '0';
             notif.style.transform = 'translateX(-50%) scale(0.8) translateY(-25px)';
@@ -889,7 +913,7 @@ class TankMayhemGame {
     destroy() {
         if (this.arenaGroup) {
             window.engine.scene.remove(this.arenaGroup);
-            this.arenaGroup.traverse((object) => {
+            this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
                     if (Array.isArray(object.material)) {

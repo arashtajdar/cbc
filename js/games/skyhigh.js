@@ -4,7 +4,7 @@ export class SkyHighGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
-        
+
         window.SkyHighGame = this.constructor;
 
         this.scene = window.engine.scene;
@@ -16,7 +16,7 @@ export class SkyHighGame {
 
         this.players = [];
         this.tiles = [];
-        
+
         this.isGameOver = false;
 
         this.originalCameraPos = this.camera.position.clone();
@@ -25,12 +25,13 @@ export class SkyHighGame {
 
         this.createEnvironment();
         this.createPlayers();
-        
-        this.updateCallbackId = window.engine.updateCallbacks.push((dt, time) => {
-            // Usually update is called directly by engine if window.activeGame == this
-        }) - 1;
 
-        console.log("Sky High initialized!");
+        this.updateCallbackId =
+            window.engine.updateCallbacks.push((dt, time) => {
+                // Usually update is called directly by engine if window.activeGame == this
+            }) - 1;
+
+        console.log('Sky High initialized!');
     }
 
     setupCamera() {
@@ -41,14 +42,19 @@ export class SkyHighGame {
     createEnvironment() {
         const layers = [0, -8, -16];
         const colors = [0x44aaff, 0x44ffaa, 0xffaa44];
-        
+
         this.hexRadius = 1.6;
         const hexWidth = this.hexRadius * Math.sqrt(3);
         const hexHeight = this.hexRadius * 2;
-        
+
         const gridRadius = 4; // Rings of hexes
-        
-        const geo = new THREE.CylinderGeometry(this.hexRadius - 0.05, this.hexRadius - 0.05, 0.5, 6);
+
+        const geo = new THREE.CylinderGeometry(
+            this.hexRadius - 0.05,
+            this.hexRadius - 0.05,
+            0.5,
+            6
+        );
 
         layers.forEach((yPos, layerIdx) => {
             const mat = new THREE.MeshStandardMaterial({
@@ -69,9 +75,9 @@ export class SkyHighGame {
                 const r2 = Math.min(gridRadius, -q + gridRadius);
                 for (let r = r1; r <= r2; r++) {
                     const mesh = new THREE.Mesh(geo, mat);
-                    
-                    const cx = hexWidth * (q + r/2);
-                    const cz = (hexHeight * 3/4) * r;
+
+                    const cx = hexWidth * (q + r / 2);
+                    const cz = ((hexHeight * 3) / 4) * r;
 
                     mesh.position.set(cx, yPos, cz);
                     mesh.receiveShadow = true;
@@ -106,15 +112,10 @@ export class SkyHighGame {
             new THREE.Vector3(-6, 2, 0)
         ];
 
-        const colors = [
-            this.p1Color,
-            0x39ff14,
-            0x00f0ff,
-            0xb026ff
-        ];
+        const colors = [this.p1Color, 0x39ff14, 0x00f0ff, 0xb026ff];
 
         for (let i = 0; i < 4; i++) {
-            const isHuman = (i === 0);
+            const isHuman = i === 0;
             const radius = 0.6;
             const geo = new THREE.SphereGeometry(radius, 32, 32);
             const mat = new THREE.MeshStandardMaterial({
@@ -156,7 +157,7 @@ export class SkyHighGame {
             if (t.isGone) return;
             if (t.isStepped) {
                 t.timer -= dt;
-                
+
                 // Flash effect
                 if (Math.floor(t.timer * 10) % 2 === 0) {
                     t.mesh.material = t.warnMat;
@@ -181,7 +182,7 @@ export class SkyHighGame {
 
             aliveCount++;
             lastAliveId = p.id;
-            
+
             groupCenter.add(p.mesh.position);
             centerCount++;
 
@@ -192,7 +193,7 @@ export class SkyHighGame {
                 if (inputs.s || inputs.ArrowDown) moveDir.z += 1;
                 if (inputs.a || inputs.ArrowLeft) moveDir.x -= 1;
                 if (inputs.d || inputs.ArrowRight) moveDir.x += 1;
-                
+
                 if (moveDir.length() > 0) moveDir.normalize();
 
                 if (inputs.Space && p.isGrounded) {
@@ -226,7 +227,8 @@ export class SkyHighGame {
                     // Fast height check
                     const dy = p.mesh.position.y - p.radius - (t.y + 0.25);
                     if (dy >= -0.5 && dy <= 0.5) {
-                        const distSq = (p.mesh.position.x - t.x)**2 + (p.mesh.position.z - t.z)**2;
+                        const distSq =
+                            (p.mesh.position.x - t.x) ** 2 + (p.mesh.position.z - t.z) ** 2;
                         if (distSq < nearestDist) {
                             nearestDist = distSq;
                             nearestTile = t;
@@ -235,7 +237,7 @@ export class SkyHighGame {
                 });
 
                 // Hex inner radius roughly hexRadius * 0.866
-                if (nearestTile && nearestDist < (this.hexRadius * 0.8)**2) {
+                if (nearestTile && nearestDist < (this.hexRadius * 0.8) ** 2) {
                     p.mesh.position.y = nearestTile.y + 0.25 + p.radius;
                     p.velocity.y = 0;
                     p.isGrounded = true;
@@ -261,7 +263,11 @@ export class SkyHighGame {
         // Update Camera slightly
         if (centerCount > 0) {
             groupCenter.divideScalar(centerCount);
-            const targetCamPos = new THREE.Vector3(groupCenter.x * 0.3, this.originalCameraPos.y + groupCenter.y, this.originalCameraPos.z + groupCenter.z * 0.3);
+            const targetCamPos = new THREE.Vector3(
+                groupCenter.x * 0.3,
+                this.originalCameraPos.y + groupCenter.y,
+                this.originalCameraPos.z + groupCenter.z * 0.3
+            );
             this.camera.position.lerp(targetCamPos, dt * 2.0);
             this.camera.lookAt(groupCenter.x * 0.5, groupCenter.y, groupCenter.z * 0.5);
         }
@@ -277,11 +283,13 @@ export class SkyHighGame {
         // AI Logic: Find safe tile nearby
         let currentTile = null;
         let minDist = Infinity;
-        
-        const activeTiles = this.tiles.filter(t => !t.isGone && Math.abs(t.y - (p.mesh.position.y - p.radius - 0.25)) < 1.0);
+
+        const activeTiles = this.tiles.filter(
+            t => !t.isGone && Math.abs(t.y - (p.mesh.position.y - p.radius - 0.25)) < 1.0
+        );
 
         activeTiles.forEach(t => {
-            const distSq = (p.mesh.position.x - t.x)**2 + (p.mesh.position.z - t.z)**2;
+            const distSq = (p.mesh.position.x - t.x) ** 2 + (p.mesh.position.z - t.z) ** 2;
             if (distSq < minDist) {
                 minDist = distSq;
                 currentTile = t;
@@ -291,8 +299,8 @@ export class SkyHighGame {
         if (!currentTile) {
             // Falling or no tiles, try jumping
             if (p.isGrounded) {
-                 p.velocity.y = p.jumpForce;
-                 p.isGrounded = false;
+                p.velocity.y = p.jumpForce;
+                p.isGrounded = false;
             }
             return;
         }
@@ -305,10 +313,11 @@ export class SkyHighGame {
             let minSafeDist = Infinity;
             activeTiles.forEach(t => {
                 if (t === currentTile) return;
-                const distSq = (currentTile.x - t.x)**2 + (currentTile.z - t.z)**2;
-                if (distSq < (this.hexRadius * 2.5)**2) { // Adjacent
+                const distSq = (currentTile.x - t.x) ** 2 + (currentTile.z - t.z) ** 2;
+                if (distSq < (this.hexRadius * 2.5) ** 2) {
+                    // Adjacent
                     if (!t.isStepped) {
-                        const distToCenter = t.x**2 + t.z**2; // Prefer center
+                        const distToCenter = t.x ** 2 + t.z ** 2; // Prefer center
                         if (distToCenter < minSafeDist) {
                             minSafeDist = distToCenter;
                             bestSafeTile = t;
@@ -324,15 +333,17 @@ export class SkyHighGame {
                 activeTiles.forEach(t => {
                     if (t === currentTile) return;
                     if (!t.isStepped) {
-                        const distSq = (p.mesh.position.x - t.x)**2 + (p.mesh.position.z - t.z)**2;
-                        if (distSq < (this.hexRadius * 5)**2) { // Jumpable
+                        const distSq =
+                            (p.mesh.position.x - t.x) ** 2 + (p.mesh.position.z - t.z) ** 2;
+                        if (distSq < (this.hexRadius * 5) ** 2) {
+                            // Jumpable
                             targetTile = t;
                         }
                     }
                 });
                 if (targetTile && p.isGrounded) {
-                     p.velocity.y = p.jumpForce;
-                     p.isGrounded = false;
+                    p.velocity.y = p.jumpForce;
+                    p.isGrounded = false;
                 }
             }
         } else {
@@ -341,7 +352,11 @@ export class SkyHighGame {
         }
 
         if (targetTile) {
-            const dir = new THREE.Vector3(targetTile.x - p.mesh.position.x, 0, targetTile.z - p.mesh.position.z);
+            const dir = new THREE.Vector3(
+                targetTile.x - p.mesh.position.x,
+                0,
+                targetTile.z - p.mesh.position.z
+            );
             if (dir.length() > 0.5) {
                 dir.normalize();
                 p.velocity.x = dir.x * p.speed * 0.8;
@@ -357,7 +372,8 @@ export class SkyHighGame {
         if (this.isGameOver) return;
         this.isGameOver = true;
 
-        const winnerName = winnerId === 0 ? "Player 1" : (winnerId > 0 ? `AI Bot ${winnerId}` : "Nobody");
+        const winnerName =
+            winnerId === 0 ? 'Player 1' : winnerId > 0 ? `AI Bot ${winnerId}` : 'Nobody';
         const winnerColor = winnerId === 0 ? '#ff3333' : '#aaaaaa';
 
         const overlay = document.createElement('div');
@@ -427,7 +443,7 @@ export class SkyHighGame {
         if (this.updateCallbackId !== undefined) {
             window.engine.updateCallbacks.splice(this.updateCallbackId, 1);
         }
-        
+
         this.group.traverse(child => {
             if (child.isMesh) {
                 child.geometry.dispose();
@@ -444,7 +460,7 @@ export class SkyHighGame {
         this.camera.rotation.copy(this.originalCameraRot);
         this.camera.lookAt(0, 0, 0);
 
-        console.log("Sky High destroyed");
+        console.log('Sky High destroyed');
     }
 }
 

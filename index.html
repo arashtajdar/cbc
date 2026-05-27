@@ -20,16 +20,15 @@
 
     <!-- State A: Studio Splash Screen -->
     <div id="splash-screen" class="launcher-screen" style="background: #000000;">
-        <h1 class="studio-logo">MOJAR GAMES</h1>
+        <img src="./assets/studio_logo.png" alt="Mojar Games" class="studio-logo-img" style="max-width: 600px; max-height: 300px; width: 80%; object-fit: contain;" />
         <div class="splash-subtitle" style="margin-top: 20px;">Presents</div>
     </div>
 
     <!-- State B: Main Menu Screen -->
     <div id="main-menu-screen" class="launcher-screen">
         <div class="main-menu-panel">
-            <div class="game-logo-container" style="margin-bottom: 20px;">
-                <div class="game-logo-4out">4OUT</div>
-                <div class="game-logo-arena">: ARENA</div>
+            <div class="game-logo-container" style="margin-bottom: 20px; display: flex; justify-content: center;">
+                <img src="./assets/game_logo.png" alt="4OUT: ARENA" class="game-logo-img" style="max-width: 700px; max-height: 250px; width: 90%; object-fit: contain;" />
             </div>
             <div class="main-subtitle">Mojar Games Studio Launcher</div>
             
@@ -129,60 +128,60 @@
             <!-- Slots Row -->
             <div class="slots-row">
                 <!-- Slot 1: Player 1 (Human) -->
-                <div id="slot-card-p1" class="slot-card glow-cube">
+                <div id="slot-card-p1" class="slot-card">
                     <div class="slot-header">Player 1</div>
-                    <div id="p1-char-name" class="slot-char-name" style="color: var(--accent-red);">Red Titan</div>
                     <div class="slot-type human">Human</div>
-                    <div class="cycle-controls">
-                        <button class="cycle-btn" onclick="window.cyclePlayerCharacter('p1', -1)">◀</button>
-                        <button class="cycle-btn" onclick="window.cyclePlayerCharacter('p1', 1)">▶</button>
+                    <div class="vertical-cycle-container">
+                        <button class="vertical-cycle-btn" onclick="window.cyclePlayer1Character(-1)">▲</button>
+                        <div class="char-list-vertical" id="p1-char-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <button class="vertical-cycle-btn" onclick="window.cyclePlayer1Character(1)">▼</button>
                     </div>
                 </div>
 
                 <!-- Slot 2: Player 2 (AI Bot) -->
-                <div id="slot-card-p2" class="slot-card glow-sphere">
+                <div id="slot-card-p2" class="slot-card">
                     <div class="slot-header">Player 2</div>
-                    <div id="p2-char-name" class="slot-char-name" style="color: var(--accent-green);">Neon Drake</div>
                     <div class="slot-type">AI Bot</div>
-                    <div class="cycle-controls">
-                        <button class="cycle-btn" onclick="window.cyclePlayerCharacter('p2', -1)">◀</button>
-                        <button class="cycle-btn" onclick="window.cyclePlayerCharacter('p2', 1)">▶</button>
+                    <div class="vertical-cycle-container">
+                        <div class="char-list-vertical" id="p2-char-list">
+                            <!-- Populated dynamically -->
+                        </div>
                     </div>
                 </div>
 
                 <!-- Slot 3: Player 3 (AI Bot) -->
-                <div id="slot-card-p3" class="slot-card glow-cylinder">
+                <div id="slot-card-p3" class="slot-card">
                     <div class="slot-header">Player 3</div>
-                    <div id="p3-char-name" class="slot-char-name" style="color: var(--accent-blue);">Cyber Mech</div>
                     <div class="slot-type">AI Bot</div>
-                    <div class="cycle-controls">
-                        <button class="cycle-btn" onclick="window.cyclePlayerCharacter('p3', -1)">◀</button>
-                        <button class="cycle-btn" onclick="window.cyclePlayerCharacter('p3', 1)">▶</button>
+                    <div class="vertical-cycle-container">
+                        <div class="char-list-vertical" id="p3-char-list">
+                            <!-- Populated dynamically -->
+                        </div>
                     </div>
                 </div>
 
                 <!-- Slot 4: Player 4 (AI Bot) -->
-                <div id="slot-card-p4" class="slot-card glow-cone">
+                <div id="slot-card-p4" class="slot-card">
                     <div class="slot-header">Player 4</div>
-                    <div id="p4-char-name" class="slot-char-name" style="color: var(--accent-purple);">Shadow Rogue</div>
                     <div class="slot-type">AI Bot</div>
-                    <div class="cycle-controls">
-                        <button class="cycle-btn" onclick="window.cyclePlayerCharacter('p4', -1)">◀</button>
-                        <button class="cycle-btn" onclick="window.cyclePlayerCharacter('p4', 1)">▶</button>
+                    <div class="vertical-cycle-container">
+                        <div class="char-list-vertical" id="p4-char-list">
+                            <!-- Populated dynamically -->
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Mini-Three.js Character Preview Canvas -->
-            <div id="char-preview-canvas-container"></div>
+
             
             <!-- Controls -->
             <div style="display: flex; gap: 20px; width: 100%; justify-content: center; margin-top: 10px;">
                 <button onclick="window.transitionToState('GAME_SELECT')" class="menu-btn" style="width: 250px;">
                     ◀ Back to Selection
                 </button>
-                <button onclick="window.transitionToState('ARENA_SELECT')" class="menu-btn primary-btn" style="width: 250px;">
-                    Continue to Arena ▶
+                <button id="btn-lockin-continue" onclick="window.lockInPlayer1()" class="menu-btn primary-btn" style="width: 250px;">
+                    Lock In Champion
                 </button>
             </div>
         </div>
@@ -312,11 +311,13 @@
             <div class="space-container">
                 <div class="key-indicator space" id="key-space">Spacebar</div>
             </div>
-        </div>
-    </div>
-
     <!-- Three.js Setup module loading -->
+    <script src="./js/LauncherState.js"></script>
+    <script src="./js/InputManager.js"></script>
+    <script src="./js/UIManager.js"></script>
+    <script type="module" src="./js/PreviewRenderer.js"></script>
     <script type="module" src="./js/engine.js"></script>
+    <script type="module" src="./js/CharacterBuilder.js"></script>
     <script type="module" src="./js/games/ballistix.js"></script>
     <script type="module" src="./js/games/dragondrop.js"></script>
     <script type="module" src="./js/games/cratecrush.js"></script>

@@ -4,7 +4,7 @@ export class ToxicTrapGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
-        
+
         window.ToxicTrapGame = this.constructor;
 
         this.scene = window.engine.scene;
@@ -16,12 +16,12 @@ export class ToxicTrapGame {
 
         this.players = [];
         this.traps = [];
-        
+
         this.arenaSize = 30;
         this.safeZoneSize = this.arenaSize;
         this.minSafeZoneSize = 2;
         this.shrinkRate = 0.4; // Units per second
-        
+
         this.isGameOver = false;
         this.trapSpawnTimer = 0;
 
@@ -31,12 +31,13 @@ export class ToxicTrapGame {
 
         this.createEnvironment();
         this.createPlayers();
-        
-        this.updateCallbackId = window.engine.updateCallbacks.push((dt, time) => {
-            this.updateParticles(dt);
-        }) - 1;
 
-        console.log("Toxic Trap initialized!");
+        this.updateCallbackId =
+            window.engine.updateCallbacks.push((dt, time) => {
+                this.updateParticles(dt);
+            }) - 1;
+
+        console.log('Toxic Trap initialized!');
     }
 
     setupCamera() {
@@ -66,7 +67,7 @@ export class ToxicTrapGame {
         stormShape.lineTo(this.arenaSize, this.arenaSize);
         stormShape.lineTo(-this.arenaSize, this.arenaSize);
         stormShape.lineTo(-this.arenaSize, -this.arenaSize);
-        
+
         const hole = new THREE.Path();
         const hs = this.safeZoneSize / 2;
         hole.moveTo(-hs, -hs);
@@ -78,28 +79,32 @@ export class ToxicTrapGame {
 
         const extrudeSettings = { depth: 0.1, bevelEnabled: false };
         const stormGeom = new THREE.ExtrudeGeometry(stormShape, extrudeSettings);
-        
-        this.stormMat = new THREE.MeshBasicMaterial({ color: 0x22ff22, transparent: true, opacity: 0.4 });
+
+        this.stormMat = new THREE.MeshBasicMaterial({
+            color: 0x22ff22,
+            transparent: true,
+            opacity: 0.4
+        });
         this.stormMesh = new THREE.Mesh(stormGeom, this.stormMat);
         this.stormMesh.rotation.x = -Math.PI / 2;
         this.stormMesh.position.y = 0.1;
         this.group.add(this.stormMesh);
-        
+
         // Boundaries walls
         const wallGeo = new THREE.BoxGeometry(this.arenaSize, 4, 1);
         const wallMat = new THREE.MeshStandardMaterial({ color: 0x222233 });
-        
+
         const w1 = new THREE.Mesh(wallGeo, wallMat);
-        w1.position.set(0, 2, -this.arenaSize/2 - 0.5);
+        w1.position.set(0, 2, -this.arenaSize / 2 - 0.5);
         const w2 = new THREE.Mesh(wallGeo, wallMat);
-        w2.position.set(0, 2, this.arenaSize/2 + 0.5);
+        w2.position.set(0, 2, this.arenaSize / 2 + 0.5);
         const w3 = new THREE.Mesh(wallGeo, wallMat);
-        w3.rotation.y = Math.PI/2;
-        w3.position.set(-this.arenaSize/2 - 0.5, 2, 0);
+        w3.rotation.y = Math.PI / 2;
+        w3.position.set(-this.arenaSize / 2 - 0.5, 2, 0);
         const w4 = new THREE.Mesh(wallGeo, wallMat);
-        w4.rotation.y = Math.PI/2;
-        w4.position.set(this.arenaSize/2 + 0.5, 2, 0);
-        
+        w4.rotation.y = Math.PI / 2;
+        w4.position.set(this.arenaSize / 2 + 0.5, 2, 0);
+
         this.group.add(w1, w2, w3, w4);
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
@@ -114,15 +119,10 @@ export class ToxicTrapGame {
             new THREE.Vector3(-10, 1, -10)
         ];
 
-        const colors = [
-            this.p1Color,
-            0x39ff14,
-            0x00f0ff,
-            0xb026ff
-        ];
+        const colors = [this.p1Color, 0x39ff14, 0x00f0ff, 0xb026ff];
 
         for (let i = 0; i < 4; i++) {
-            const isHuman = (i === 0);
+            const isHuman = i === 0;
             const radius = 0.6;
             const geo = new THREE.CylinderGeometry(radius, radius, 1.8, 16);
             const mat = new THREE.MeshStandardMaterial({
@@ -182,7 +182,7 @@ export class ToxicTrapGame {
                 if (t.animTimer > 3.0) {
                     t.mesh.position.y = 0.5; // Pop up
                     t.mesh.material.color.setHex(0xff0000);
-                    setTimeout(() => { 
+                    setTimeout(() => {
                         if (t.mesh) {
                             t.mesh.position.y = 0.05; // Go down
                             t.mesh.material.color.setHex(0x555555);
@@ -220,7 +220,7 @@ export class ToxicTrapGame {
                 if (inputs.s || inputs.ArrowDown) moveDir.z += 1;
                 if (inputs.a || inputs.ArrowLeft) moveDir.x -= 1;
                 if (inputs.d || inputs.ArrowRight) moveDir.x += 1;
-                
+
                 if (moveDir.length() > 0) moveDir.normalize();
             } else {
                 this.updateAI(p, dt);
@@ -242,8 +242,12 @@ export class ToxicTrapGame {
             // Perimeter Damage Resolution
             const halfSafe = this.safeZoneSize / 2;
             let inStorm = false;
-            if (p.mesh.position.x < -halfSafe || p.mesh.position.x > halfSafe || 
-                p.mesh.position.z < -halfSafe || p.mesh.position.z > halfSafe) {
+            if (
+                p.mesh.position.x < -halfSafe ||
+                p.mesh.position.x > halfSafe ||
+                p.mesh.position.z < -halfSafe ||
+                p.mesh.position.z > halfSafe
+            ) {
                 inStorm = true;
                 p.hp -= 10 * dt; // -10 HP per second
             }
@@ -251,15 +255,15 @@ export class ToxicTrapGame {
             // Trap Damage Resolution
             let inFlame = false;
             this.traps.forEach(t => {
-                const distSq = (p.mesh.position.x - t.x)**2 + (p.mesh.position.z - t.z)**2;
-                if (distSq < (p.radius + t.radius)**2) {
+                const distSq = (p.mesh.position.x - t.x) ** 2 + (p.mesh.position.z - t.z) ** 2;
+                if (distSq < (p.radius + t.radius) ** 2) {
                     if (t.type === 'flame') {
                         inFlame = true;
                         p.hp -= 15 * dt; // 15 dmg per second
                     } else if (t.type === 'spike' && t.activeFrame > 0 && !p.spikeHitRecently) {
                         p.hp -= 30; // 30 instant dmg
                         p.spikeHitRecently = true;
-                        setTimeout(() => p.spikeHitRecently = false, 1000); // 1s invuln to spike
+                        setTimeout(() => (p.spikeHitRecently = false), 1000); // 1s invuln to spike
                     }
                 }
             });
@@ -278,7 +282,7 @@ export class ToxicTrapGame {
                 p.isDead = true;
                 this.group.remove(p.mesh);
             }
-            
+
             // Sync UI HUD if possible (optional, if elements exist)
             this.updatePlayerHUD(p);
         });
@@ -294,12 +298,16 @@ export class ToxicTrapGame {
         const half = this.arenaSize / 2 - 2;
         const x = (Math.random() - 0.5) * 2 * half;
         const z = (Math.random() - 0.5) * 2 * half;
-        
+
         let mesh;
         let radius = 1.5;
         if (type === 'flame') {
             const geo = new THREE.CylinderGeometry(radius, radius, 4, 16);
-            const mat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.8 });
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0xff4400,
+                transparent: true,
+                opacity: 0.8
+            });
             mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(x, 2, z);
         } else {
@@ -308,7 +316,7 @@ export class ToxicTrapGame {
             mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(x, 0.05, z);
         }
-        
+
         this.group.add(mesh);
 
         this.traps.push({
@@ -334,7 +342,7 @@ export class ToxicTrapGame {
         stormShape.lineTo(this.arenaSize, this.arenaSize);
         stormShape.lineTo(-this.arenaSize, this.arenaSize);
         stormShape.lineTo(-this.arenaSize, -this.arenaSize);
-        
+
         const hole = new THREE.Path();
         const hs = this.safeZoneSize / 2;
         hole.moveTo(-hs, -hs);
@@ -346,7 +354,7 @@ export class ToxicTrapGame {
 
         const extrudeSettings = { depth: 0.1, bevelEnabled: false };
         const stormGeom = new THREE.ExtrudeGeometry(stormShape, extrudeSettings);
-        
+
         this.stormMesh = new THREE.Mesh(stormGeom, this.stormMat);
         this.stormMesh.rotation.x = -Math.PI / 2;
         this.stormMesh.position.y = 0.1;
@@ -377,7 +385,7 @@ export class ToxicTrapGame {
         const halfSafe = this.safeZoneSize / 2;
         const distToSafeEdgeX = halfSafe - Math.abs(p.mesh.position.x);
         const distToSafeEdgeZ = halfSafe - Math.abs(p.mesh.position.z);
-        
+
         let moveDir = new THREE.Vector3(0, 0, 0);
 
         if (distToSafeEdgeX < 2 || distToSafeEdgeZ < 2) {
@@ -392,7 +400,7 @@ export class ToxicTrapGame {
         this.traps.forEach(t => {
             const trapPos = new THREE.Vector3(t.x, 0, t.z);
             const dist = p.mesh.position.distanceTo(trapPos);
-            
+
             // Flee radius
             if (dist < t.radius + 3.0) {
                 // If it's a spike that is dormant, maybe ignore?
@@ -422,7 +430,8 @@ export class ToxicTrapGame {
         if (this.isGameOver) return;
         this.isGameOver = true;
 
-        const winnerName = winnerId === 0 ? "Player 1" : (winnerId > 0 ? `AI Bot ${winnerId}` : "Nobody");
+        const winnerName =
+            winnerId === 0 ? 'Player 1' : winnerId > 0 ? `AI Bot ${winnerId}` : 'Nobody';
         const winnerColor = winnerId === 0 ? '#ff3333' : '#aaaaaa';
 
         const overlay = document.createElement('div');
@@ -477,7 +486,7 @@ export class ToxicTrapGame {
             if (!p.isDead) this.group.remove(p.mesh);
             p.mesh.geometry.dispose();
             p.mesh.material.dispose();
-            
+
             // reset UI
             this.updatePlayerHUD({ id: p.id, hp: 100 });
         });
@@ -502,7 +511,7 @@ export class ToxicTrapGame {
         if (this.updateCallbackId !== undefined) {
             window.engine.updateCallbacks.splice(this.updateCallbackId, 1);
         }
-        
+
         this.group.traverse(child => {
             if (child.isMesh) {
                 child.geometry.dispose();
@@ -522,10 +531,13 @@ export class ToxicTrapGame {
         // Reset HUDs
         ['life-val-player', 'life-val-top', 'life-val-left', 'life-val-right'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) { el.textContent = '15'; el.style.color = ''; }
+            if (el) {
+                el.textContent = '15';
+                el.style.color = '';
+            }
         });
 
-        console.log("Toxic Trap destroyed");
+        console.log('Toxic Trap destroyed');
     }
 }
 

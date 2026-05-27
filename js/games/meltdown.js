@@ -4,7 +4,7 @@ export class MeltDownGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
-        
+
         window.MeltDownGame = this.constructor;
 
         this.scene = window.engine.scene;
@@ -17,17 +17,17 @@ export class MeltDownGame {
         this.players = [];
         this.arenaRadius = 18;
         this.isGameOver = false;
-        
+
         this.baseAngularVelocity = 1.0;
         this.angularVelocity = this.baseAngularVelocity;
         this.matchTime = 0;
 
         // Custom inputs for ducking
         this.customInputs = { duck: false };
-        this.handleKeyDown = (e) => {
+        this.handleKeyDown = e => {
             if (e.key === 'Shift' || e.key === 'Control') this.customInputs.duck = true;
         };
-        this.handleKeyUp = (e) => {
+        this.handleKeyUp = e => {
             if (e.key === 'Shift' || e.key === 'Control') this.customInputs.duck = false;
         };
         window.addEventListener('keydown', this.handleKeyDown);
@@ -39,12 +39,13 @@ export class MeltDownGame {
 
         this.createEnvironment();
         this.createPlayers();
-        
-        this.updateCallbackId = window.engine.updateCallbacks.push((dt, time) => {
-            // Wait for activeGame update
-        }) - 1;
 
-        console.log("Melt Down initialized!");
+        this.updateCallbackId =
+            window.engine.updateCallbacks.push((dt, time) => {
+                // Wait for activeGame update
+            }) - 1;
+
+        console.log('Melt Down initialized!');
     }
 
     setupCamera() {
@@ -64,7 +65,7 @@ export class MeltDownGame {
         platform.position.y = -1;
         platform.receiveShadow = true;
         this.group.add(platform);
-        
+
         // Void plane
         const voidGeo = new THREE.PlaneGeometry(200, 200);
         const voidMat = new THREE.MeshBasicMaterial({ color: 0x05070a });
@@ -76,7 +77,7 @@ export class MeltDownGame {
         // Sweeping Beams Pivot
         this.pivot = new THREE.Group();
         this.group.add(this.pivot);
-        
+
         // Center Pillar
         const pillarGeo = new THREE.CylinderGeometry(1.5, 1.5, 6, 16);
         const pillarMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
@@ -114,16 +115,11 @@ export class MeltDownGame {
             new THREE.Vector3(-10, 1.5, 0)
         ];
 
-        const colors = [
-            this.p1Color,
-            0x39ff14,
-            0x00f0ff,
-            0xb026ff
-        ];
+        const colors = [this.p1Color, 0x39ff14, 0x00f0ff, 0xb026ff];
 
         for (let i = 0; i < 4; i++) {
-            const isHuman = (i === 0);
-            
+            const isHuman = i === 0;
+
             // Using a Box geometry so shrinking the Y scale looks like ducking
             const width = 1.0;
             const height = 2.0;
@@ -136,12 +132,12 @@ export class MeltDownGame {
                 emissive: colors[i],
                 emissiveIntensity: 0.2
             });
-            
+
             const mesh = new THREE.Mesh(geo, mat);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             mesh.position.copy(startPositions[i]);
-            
+
             this.group.add(mesh);
 
             this.players.push({
@@ -166,10 +162,10 @@ export class MeltDownGame {
         if (this.isGameOver) return;
 
         this.matchTime += dt;
-        
+
         // Increase angular velocity slowly over time (cap at 3.5 rad/s)
         this.angularVelocity = Math.min(3.5, this.baseAngularVelocity + this.matchTime * 0.05);
-        
+
         // Rotate beams
         this.pivot.rotation.y += this.angularVelocity * dt;
 
@@ -190,7 +186,7 @@ export class MeltDownGame {
                 if (inputs.s || inputs.ArrowDown) moveDir.z += 1;
                 if (inputs.a || inputs.ArrowLeft) moveDir.x -= 1;
                 if (inputs.d || inputs.ArrowRight) moveDir.x += 1;
-                
+
                 if (moveDir.length() > 0) moveDir.normalize();
 
                 wantJump = inputs.Space;
@@ -208,7 +204,7 @@ export class MeltDownGame {
                 p.isDucking = true;
                 p.mesh.scale.y = 0.5; // Shrink to half height
                 // Offset Y to keep on ground
-                if (p.isGrounded) p.mesh.position.y = 0.5; 
+                if (p.isGrounded) p.mesh.position.y = 0.5;
             } else {
                 p.isDucking = false;
                 p.mesh.scale.y = 1.0;
@@ -218,7 +214,7 @@ export class MeltDownGame {
             // Ground checking
             if (p.mesh.position.y <= (p.isDucking ? 0.5 : 1.0) && p.velocity.y <= 0) {
                 // Determine if we are still on platform
-                const distFromCenter = Math.sqrt(p.mesh.position.x**2 + p.mesh.position.z**2);
+                const distFromCenter = Math.sqrt(p.mesh.position.x ** 2 + p.mesh.position.z ** 2);
                 if (distFromCenter <= this.arenaRadius) {
                     p.isGrounded = true;
                     p.velocity.y = 0;
@@ -239,14 +235,22 @@ export class MeltDownGame {
             // Horizontal Movement (only control if not knocked in the air heavily)
             // If they got hit, let them fly. If grounded or jumping on purpose, allow control.
             if (p.isGrounded || Math.abs(p.velocity.x) < p.speed * 1.5) {
-                 const currentY = p.velocity.y; // preserve vertical
-                 // Reduce speed if ducking
-                 const currentSpeed = p.isDucking ? p.speed * 0.4 : p.speed;
-                 
-                 // Smooth velocity
-                 p.velocity.x = THREE.MathUtils.lerp(p.velocity.x, moveDir.x * currentSpeed, 10 * dt);
-                 p.velocity.z = THREE.MathUtils.lerp(p.velocity.z, moveDir.z * currentSpeed, 10 * dt);
-                 p.velocity.y = currentY;
+                const currentY = p.velocity.y; // preserve vertical
+                // Reduce speed if ducking
+                const currentSpeed = p.isDucking ? p.speed * 0.4 : p.speed;
+
+                // Smooth velocity
+                p.velocity.x = THREE.MathUtils.lerp(
+                    p.velocity.x,
+                    moveDir.x * currentSpeed,
+                    10 * dt
+                );
+                p.velocity.z = THREE.MathUtils.lerp(
+                    p.velocity.z,
+                    moveDir.z * currentSpeed,
+                    10 * dt
+                );
+                p.velocity.y = currentY;
             }
 
             // Gravity
@@ -275,9 +279,9 @@ export class MeltDownGame {
         // The low beam is along positive X axis of pivot
         // The high beam is along negative X axis of pivot
         // Let's get their world positions/orientations
-        
+
         const pivotRot = this.pivot.rotation.y;
-        
+
         // Low beam direction in world space
         const lowDir = new THREE.Vector3(Math.cos(pivotRot), 0, -Math.sin(pivotRot));
         // High beam direction in world space
@@ -289,14 +293,14 @@ export class MeltDownGame {
             // Simple line-point distance check in XZ plane
             const pPos = p.mesh.position.clone();
             pPos.y = 0; // Project to XZ
-            
+
             // Check Low Beam (jump over)
             let lowDot = pPos.dot(lowDir);
             if (lowDot > 0 && lowDot < this.arenaRadius) {
                 // Player is on the low beam side
                 const proj = lowDir.clone().multiplyScalar(lowDot);
                 const distToLine = pPos.distanceTo(proj);
-                
+
                 // Beam radius = 0.8, player approx radius = 0.8
                 if (distToLine < 1.6) {
                     // Check Y bounds
@@ -304,25 +308,25 @@ export class MeltDownGame {
                     // Player Y is position.y. Scale affects height.
                     const pBottom = p.mesh.position.y - (p.isDucking ? 0.5 : 1.0);
                     const pTop = p.mesh.position.y + (p.isDucking ? 0.5 : 1.0);
-                    
+
                     if (pBottom < 2.0 && pTop > 0.4) {
                         // Collision!
                         this.applyKnockback(p, lowDir, pivotRot);
                     }
                 }
             }
-            
+
             // Check High Beam (duck under)
             let highDot = pPos.dot(highDir);
             if (highDot > 0 && highDot < this.arenaRadius) {
                 const proj = highDir.clone().multiplyScalar(highDot);
                 const distToLine = pPos.distanceTo(proj);
-                
+
                 if (distToLine < 1.6) {
                     // High beam Y is 3.5, radius 0.8 -> goes from Y=2.7 to Y=4.3
                     const pBottom = p.mesh.position.y - (p.isDucking ? 0.5 : 1.0);
                     const pTop = p.mesh.position.y + (p.isDucking ? 0.5 : 1.0);
-                    
+
                     if (pBottom < 4.3 && pTop > 2.7) {
                         // Collision!
                         this.applyKnockback(p, highDir, pivotRot + Math.PI); // offset rotation
@@ -335,16 +339,18 @@ export class MeltDownGame {
     applyKnockback(player, beamDir, beamAngle) {
         // Normal vector is perpendicular to beamDir in direction of rotation
         const normal = new THREE.Vector3(-Math.sin(beamAngle), 0, -Math.cos(beamAngle)).normalize();
-        
+
         // Push outward and forward
         const outward = player.mesh.position.clone().setY(0).normalize();
-        
-        const force = normal.multiplyScalar(this.angularVelocity * 15).add(outward.multiplyScalar(15));
-        
+
+        const force = normal
+            .multiplyScalar(this.angularVelocity * 15)
+            .add(outward.multiplyScalar(15));
+
         player.velocity.x = force.x;
         player.velocity.z = force.z;
         player.velocity.y = 15; // knock up
-        
+
         player.isGrounded = false;
         player.isDucking = false;
     }
@@ -355,7 +361,7 @@ export class MeltDownGame {
         p.moveDir = new THREE.Vector3();
 
         const pivotRot = this.pivot.rotation.y;
-        
+
         // Low beam direction
         const lowDir = new THREE.Vector3(Math.cos(pivotRot), 0, -Math.sin(pivotRot));
         // High beam direction
@@ -363,13 +369,14 @@ export class MeltDownGame {
 
         const pPos = p.mesh.position.clone();
         pPos.y = 0;
-        
+
         const distFromCenter = pPos.length();
 
         // 1. Stay on platform
         if (distFromCenter > this.arenaRadius * 0.6) {
             p.moveDir.copy(pPos).negate().normalize();
-        } else if (distFromCenter < 3.0) { // Don't hug center pillar
+        } else if (distFromCenter < 3.0) {
+            // Don't hug center pillar
             p.moveDir.copy(pPos).normalize();
         }
 
@@ -378,12 +385,16 @@ export class MeltDownGame {
         // The beam rotates CCW or CW? Y rotation increases -> counter-clockwise if looking from top
         // Normal of the low beam pushing forward:
         const lowNormal = new THREE.Vector3(-Math.sin(pivotRot), 0, -Math.cos(pivotRot));
-        const highNormal = new THREE.Vector3(-Math.sin(pivotRot + Math.PI), 0, -Math.cos(pivotRot + Math.PI));
+        const highNormal = new THREE.Vector3(
+            -Math.sin(pivotRot + Math.PI),
+            0,
+            -Math.cos(pivotRot + Math.PI)
+        );
 
         // Distance of player ahead of the beam = dot product of position and beam normal
         const lowDistAhead = pPos.dot(lowNormal);
         const lowDistAlong = pPos.dot(lowDir);
-        
+
         if (lowDistAlong > 0 && lowDistAhead > 0 && lowDistAhead < 5.0) {
             // Low beam is approaching within 5 units
             // AI should jump right before it hits
@@ -391,10 +402,10 @@ export class MeltDownGame {
                 p.wantJump = true;
             }
         }
-        
+
         const highDistAhead = pPos.dot(highNormal);
         const highDistAlong = pPos.dot(highDir);
-        
+
         if (highDistAlong > 0 && highDistAhead > 0 && highDistAhead < 5.0) {
             // High beam approaching
             if (highDistAhead < 3.5 && p.isGrounded) {
@@ -402,7 +413,7 @@ export class MeltDownGame {
                 p.moveDir.set(0, 0, 0); // Stop moving while ducking
             }
         }
-        
+
         // Sometimes AI gets confused or misses, let's add a small reaction delay flaw
         // For simplicity, we just use precise distances above.
     }
@@ -411,7 +422,8 @@ export class MeltDownGame {
         if (this.isGameOver) return;
         this.isGameOver = true;
 
-        const winnerName = winnerId === 0 ? "Player 1" : (winnerId > 0 ? `AI Bot ${winnerId}` : "Nobody");
+        const winnerName =
+            winnerId === 0 ? 'Player 1' : winnerId > 0 ? `AI Bot ${winnerId}` : 'Nobody';
         const winnerColor = winnerId === 0 ? '#ff3333' : '#aaaaaa';
 
         const overlay = document.createElement('div');
@@ -473,10 +485,10 @@ export class MeltDownGame {
         if (this.updateCallbackId !== undefined) {
             window.engine.updateCallbacks.splice(this.updateCallbackId, 1);
         }
-        
+
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
-        
+
         this.group.traverse(child => {
             if (child.isMesh) {
                 child.geometry.dispose();
@@ -493,7 +505,7 @@ export class MeltDownGame {
         this.camera.rotation.copy(this.originalCameraRot);
         this.camera.lookAt(0, 0, 0);
 
-        console.log("Melt Down destroyed");
+        console.log('Melt Down destroyed');
     }
 }
 

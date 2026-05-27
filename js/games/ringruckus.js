@@ -4,7 +4,7 @@ export class RingRuckusGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
-        
+
         // Expose to window for engine to call
         window.RingRuckusGame = this.constructor;
 
@@ -29,15 +29,16 @@ export class RingRuckusGame {
 
         this.createEnvironment();
         this.createPlayers();
-        
-        // Add to engine update loop
-        this.updateCallbackId = window.engine.updateCallbacks.push((dt, time) => {
-            // Usually update is called directly by engine if window.activeGame == this
-            // We'll rely on the main engine update loop for particles, etc.
-            this.updateParticles(dt);
-        }) - 1;
 
-        console.log("Ring Ruckus initialized!");
+        // Add to engine update loop
+        this.updateCallbackId =
+            window.engine.updateCallbacks.push((dt, time) => {
+                // Usually update is called directly by engine if window.activeGame == this
+                // We'll rely on the main engine update loop for particles, etc.
+                this.updateParticles(dt);
+            }) - 1;
+
+        console.log('Ring Ruckus initialized!');
     }
 
     setupCamera() {
@@ -48,7 +49,12 @@ export class RingRuckusGame {
 
     createEnvironment() {
         // Circular, elevated concrete platform
-        const platformGeo = new THREE.CylinderGeometry(this.arenaRadius, this.arenaRadius + 1, 2, 64);
+        const platformGeo = new THREE.CylinderGeometry(
+            this.arenaRadius,
+            this.arenaRadius + 1,
+            2,
+            64
+        );
         const platformMat = new THREE.MeshStandardMaterial({
             color: 0x888888,
             roughness: 0.9,
@@ -95,11 +101,11 @@ export class RingRuckusGame {
             this.p1Color,
             0x39ff14, // P2
             0x00f0ff, // P3
-            0xb026ff  // P4
+            0xb026ff // P4
         ];
 
         for (let i = 0; i < 4; i++) {
-            const isHuman = (i === 0);
+            const isHuman = i === 0;
             const radius = 1.0;
             const geo = new THREE.SphereGeometry(radius, 32, 32);
             const mat = new THREE.MeshStandardMaterial({
@@ -157,7 +163,7 @@ export class RingRuckusGame {
                 if (inputs.s || inputs.ArrowDown) moveDir.z += 1;
                 if (inputs.a || inputs.ArrowLeft) moveDir.x -= 1;
                 if (inputs.d || inputs.ArrowRight) moveDir.x += 1;
-                
+
                 if (moveDir.length() > 0) moveDir.normalize();
 
                 if (inputs.Space && p.dashReady) {
@@ -180,7 +186,7 @@ export class RingRuckusGame {
 
             // Move
             p.mesh.position.add(p.velocity.clone().multiplyScalar(dt));
-            
+
             // Rolling effect
             const rotationAxis = new THREE.Vector3(p.velocity.z, 0, -p.velocity.x).normalize();
             const rotationAngle = (p.velocity.length() * dt) / p.radius;
@@ -189,7 +195,9 @@ export class RingRuckusGame {
             }
 
             // Gravity if falling off edge
-            const distFromCenter = Math.sqrt(p.mesh.position.x * p.mesh.position.x + p.mesh.position.z * p.mesh.position.z);
+            const distFromCenter = Math.sqrt(
+                p.mesh.position.x * p.mesh.position.x + p.mesh.position.z * p.mesh.position.z
+            );
             if (distFromCenter > this.arenaRadius) {
                 p.velocity.y -= 30 * dt; // gravity
                 p.mesh.position.y += p.velocity.y * dt;
@@ -231,7 +239,9 @@ export class RingRuckusGame {
         });
 
         if (nearestOpponent) {
-            const oppDistCenter = Math.sqrt(nearestOpponent.mesh.position.x ** 2 + nearestOpponent.mesh.position.z ** 2);
+            const oppDistCenter = Math.sqrt(
+                nearestOpponent.mesh.position.x ** 2 + nearestOpponent.mesh.position.z ** 2
+            );
             if (oppDistCenter > this.arenaRadius * 0.5) {
                 // Opponent is near edge, target them
                 targetPos = nearestOpponent.mesh.position.clone();
@@ -245,11 +255,11 @@ export class RingRuckusGame {
         }
 
         const dirToTarget = targetPos.clone().sub(p.mesh.position).normalize();
-        
+
         // Avoid falling off
         if (p.mesh.position.distanceTo(center) > this.arenaRadius * 0.8) {
-             const dirToCenter = center.clone().sub(p.mesh.position).normalize();
-             dirToTarget.lerp(dirToCenter, 0.8).normalize();
+            const dirToCenter = center.clone().sub(p.mesh.position).normalize();
+            dirToTarget.lerp(dirToCenter, 0.8).normalize();
         }
 
         p.velocity.add(dirToTarget.multiplyScalar(p.acceleration * dt * 0.8)); // AI slightly lower accel
@@ -258,11 +268,11 @@ export class RingRuckusGame {
         if (nearestOpponent && minOppDist < 5 && p.dashReady) {
             const myDistCenter = p.mesh.position.distanceTo(center);
             const dirToOpp = nearestOpponent.mesh.position.clone().sub(p.mesh.position).normalize();
-            
+
             // Only dash if not facing the edge directly or near center
             const projectedPos = p.mesh.position.clone().add(dirToOpp.clone().multiplyScalar(5));
             if (projectedPos.distanceTo(center) < this.arenaRadius) {
-                 this.dash(p, dirToOpp);
+                this.dash(p, dirToOpp);
             }
         }
     }
@@ -281,7 +291,7 @@ export class RingRuckusGame {
                 const p2 = this.players[j];
 
                 if (p1.isDead || p2.isDead) continue;
-                
+
                 // Only collide if both are on platform roughly
                 if (p1.mesh.position.y < 0 || p2.mesh.position.y < 0) continue;
 
@@ -290,18 +300,20 @@ export class RingRuckusGame {
 
                 if (dist < minDist) {
                     // Elastic momentum conservation
-                    const normal = new THREE.Vector3().subVectors(p2.mesh.position, p1.mesh.position).normalize();
+                    const normal = new THREE.Vector3()
+                        .subVectors(p2.mesh.position, p1.mesh.position)
+                        .normalize();
                     const relVel = new THREE.Vector3().subVectors(p1.velocity, p2.velocity);
                     const speed = relVel.dot(normal);
 
                     if (speed > 0) {
                         const restitution = 1.2; // Bouncy
-                        const impulse = (1 + restitution) * speed / (1/p1.mass + 1/p2.mass);
-                        
+                        const impulse = ((1 + restitution) * speed) / (1 / p1.mass + 1 / p2.mass);
+
                         const impulseVec = normal.clone().multiplyScalar(impulse);
 
-                        p1.velocity.sub(impulseVec.clone().multiplyScalar(1/p1.mass));
-                        p2.velocity.add(impulseVec.clone().multiplyScalar(1/p2.mass));
+                        p1.velocity.sub(impulseVec.clone().multiplyScalar(1 / p1.mass));
+                        p2.velocity.add(impulseVec.clone().multiplyScalar(1 / p2.mass));
 
                         // Separate to avoid overlap
                         const overlap = minDist - dist;
@@ -309,7 +321,9 @@ export class RingRuckusGame {
                         p1.mesh.position.sub(separationVec);
                         p2.mesh.position.add(separationVec);
 
-                        this.createImpactEffect(p1.mesh.position.clone().add(p2.mesh.position).multiplyScalar(0.5));
+                        this.createImpactEffect(
+                            p1.mesh.position.clone().add(p2.mesh.position).multiplyScalar(0.5)
+                        );
                     }
                 }
             }
@@ -323,10 +337,14 @@ export class RingRuckusGame {
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.copy(pos);
             this.group.add(mesh);
-            
+
             this.particles.push({
                 mesh: mesh,
-                velocity: new THREE.Vector3((Math.random() - 0.5) * 10, Math.random() * 10, (Math.random() - 0.5) * 10),
+                velocity: new THREE.Vector3(
+                    (Math.random() - 0.5) * 10,
+                    Math.random() * 10,
+                    (Math.random() - 0.5) * 10
+                ),
                 life: 1.0
             });
         }
@@ -334,13 +352,18 @@ export class RingRuckusGame {
 
     createDashEffect(pos) {
         const ringGeo = new THREE.RingGeometry(1, 1.2, 16);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
         const ring = new THREE.Mesh(ringGeo, ringMat);
         ring.position.copy(pos);
         ring.position.y = 0.1;
         ring.rotation.x = -Math.PI / 2;
         this.group.add(ring);
-        
+
         this.particles.push({
             mesh: ring,
             velocity: new THREE.Vector3(0, 0, 0),
@@ -377,7 +400,7 @@ export class RingRuckusGame {
         if (this.isGameOver) return;
         this.isGameOver = true;
 
-        const winnerName = winnerId === 0 ? "Player 1" : `AI Bot ${winnerId}`;
+        const winnerName = winnerId === 0 ? 'Player 1' : `AI Bot ${winnerId}`;
         const winnerColor = winnerId === 0 ? '#ff3333' : '#aaaaaa';
 
         const overlay = document.createElement('div');
@@ -443,7 +466,7 @@ export class RingRuckusGame {
         if (this.updateCallbackId !== undefined) {
             window.engine.updateCallbacks.splice(this.updateCallbackId, 1);
         }
-        
+
         this.group.traverse(child => {
             if (child.isMesh) {
                 child.geometry.dispose();
@@ -461,7 +484,7 @@ export class RingRuckusGame {
         this.camera.rotation.copy(this.originalCameraRot);
         this.camera.lookAt(0, 0, 0);
 
-        console.log("Ring Ruckus destroyed");
+        console.log('Ring Ruckus destroyed');
     }
 }
 

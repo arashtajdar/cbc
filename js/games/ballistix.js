@@ -1,7 +1,7 @@
 /**
  * BALLISTIX GAMEPLAY LOGIC (CHAOS MULTIBALL EDITION)
  * Implements the BallistixGame class to run a 4-sided 3D isometric breakout/pong style game.
- * 
+ *
  * Features:
  * - 1 Human Player Paddle (Bottom, Cyan) controlled via WASD / Arrows
  * - 3 AI Opponent Paddles (Top, Left, Right) with closest-ball tracking AI
@@ -26,17 +26,17 @@ class BallistixGame {
             right: 15
         };
         this.gameOver = false;
-        
+
         // 3D Objects
         this.arenaGroup = null;
         this.floor = null;
-        
+
         // Paddles
-        this.paddle = null;       // Player (Bottom)
-        this.topPaddle = null;    // AI (Top)
-        this.leftPaddle = null;   // AI (Left)
-        this.rightPaddle = null;  // AI (Right)
-        
+        this.paddle = null; // Player (Bottom)
+        this.topPaddle = null; // AI (Top)
+        this.leftPaddle = null; // AI (Left)
+        this.rightPaddle = null; // AI (Right)
+
         // Walls formed on elimination
         this.walls = {
             player: null,
@@ -50,25 +50,25 @@ class BallistixGame {
             left: 0,
             right: 0
         };
-        
+
         // Array of active balls
         this.balls = [];
-        
+
         // Arena layout size
-        this.arenaWidth = 30;   // Left-to-Right bounds (local X)
-        this.arenaLength = 40;  // Top-to-Bottom bounds (local Z)
-        this.paddleY = 18;      // Horiz paddles Z offset (+/- 18)
+        this.arenaWidth = 30; // Left-to-Right bounds (local X)
+        this.arenaLength = 40; // Top-to-Bottom bounds (local Z)
+        this.paddleY = 18; // Horiz paddles Z offset (+/- 18)
         this.paddleXOffset = 13.5; // Vert paddles X offset (+/- 13.5)
-        
+
         this.paddleWidth = 6.5;
         this.ballRadius = 0.6;
-        
+
         // Positions
-        this.paddleX = 0;       // Player X
-        this.topPaddleX = 0;    // Top AI X
-        this.leftPaddleZ = 0;   // Left AI Z
-        this.rightPaddleZ = 0;  // Right AI Z
-        
+        this.paddleX = 0; // Player X
+        this.topPaddleX = 0; // Top AI X
+        this.leftPaddleZ = 0; // Left AI Z
+        this.rightPaddleZ = 0; // Right AI Z
+
         // Physics constants
         this.baseBallSpeed = 15.0; // Very first ball starts slow
         this.lastSpawnedSpeed = 15.0; // Tracks speed of the last spawned ball to escalate by 10%
@@ -105,7 +105,7 @@ class BallistixGame {
         if (this.arenaGroup) return; // Safety guard to prevent duplicate setup actions
         const engine = window.engine;
         if (!engine) {
-            console.error("BallistixGame: engine.js not found in global context!");
+            console.error('BallistixGame: engine.js not found in global context!');
             return;
         }
 
@@ -154,7 +154,7 @@ class BallistixGame {
             emissive: 0x0f1322,
             emissiveIntensity: 0.5
         });
-        
+
         for (const pos of this.pillarPositions) {
             const pillar = new THREE.Mesh(pillarGeo, pillarMat);
             pillar.position.set(pos.x, 1.25, pos.z);
@@ -250,7 +250,7 @@ class BallistixGame {
      */
     spawnBall(isFirstBall = false) {
         const ballGeo = new THREE.SphereGeometry(this.ballRadius, 32, 32);
-        
+
         // Random neon palette
         const neonColors = [0xff007f, 0x00f0ff, 0xffbb00, 0x39ff14, 0xb026ff, 0xff5e00];
         const chosenColor = neonColors[Math.floor(Math.random() * neonColors.length)];
@@ -275,9 +275,9 @@ class BallistixGame {
         // Corner Spawning: Pick one of the four corners at random, slightly offset inward to avoid pillars
         const corners = [
             { x: -11.5, z: -15.5 }, // Top-Left
-            { x: 11.5,  z: -15.5 }, // Top-Right
-            { x: -11.5, z: 15.5  }, // Bottom-Left
-            { x: 11.5,  z: 15.5  }  // Bottom-Right
+            { x: 11.5, z: -15.5 }, // Top-Right
+            { x: -11.5, z: 15.5 }, // Bottom-Left
+            { x: 11.5, z: 15.5 } // Bottom-Right
         ];
         const chosenCorner = corners[Math.floor(Math.random() * corners.length)];
         const startX = chosenCorner.x;
@@ -310,7 +310,7 @@ class BallistixGame {
         });
 
         // Trigger dynamic overlay notification
-        const hexString = "#" + chosenColor.toString(16).padStart(6, '0');
+        const hexString = '#' + chosenColor.toString(16).padStart(6, '0');
         if (isFirstBall) {
             this.showNotification(`Match Started! Speed: ${speed.toFixed(1)}`, hexString);
         } else {
@@ -348,16 +348,16 @@ class BallistixGame {
         notif.style.backdropFilter = 'blur(10px)';
         notif.style.webkitBackdropFilter = 'blur(10px)';
         notif.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        
+
         document.body.appendChild(notif);
-        
+
         // Force reflow
         notif.offsetHeight;
-        
+
         // Fade in
         notif.style.opacity = '1';
         notif.style.transform = 'translateX(-50%) scale(1.0)';
-        
+
         // Fade out and cleanup
         setTimeout(() => {
             notif.style.opacity = '0';
@@ -445,38 +445,45 @@ class BallistixGame {
             this.paddleX += paddleDirection * paddleMovementSpeed * dt;
 
             // Constraint boundaries (arena width = 30, paddle width = 6.5)
-            const horizPaddleLimit = (this.arenaWidth / 2) - (this.paddleWidth / 2) - 0.5;
+            const horizPaddleLimit = this.arenaWidth / 2 - this.paddleWidth / 2 - 0.5;
             this.paddleX = Math.max(-horizPaddleLimit, Math.min(horizPaddleLimit, this.paddleX));
             if (this.paddle) {
                 this.paddle.position.x = this.paddleX;
                 // Dynamic visual paddle rotation on movement
-                this.paddle.rotation.z = THREE.MathUtils.lerp(this.paddle.rotation.z, -paddleDirection * 0.12, 0.15);
+                this.paddle.rotation.z = THREE.MathUtils.lerp(
+                    this.paddle.rotation.z,
+                    -paddleDirection * 0.12,
+                    0.15
+                );
             }
         }
 
         // --- 3. AI Opponent Target Selection & Movement ---
-        const vertPaddleLimit = (this.arenaLength / 2) - (this.paddleWidth / 2) - 0.5;
-        const horizPaddleLimit = (this.arenaWidth / 2) - (this.paddleWidth / 2) - 0.5;
+        const vertPaddleLimit = this.arenaLength / 2 - this.paddleWidth / 2 - 0.5;
+        const horizPaddleLimit = this.arenaWidth / 2 - this.paddleWidth / 2 - 0.5;
 
-        let closestForTop = null, minDistTop = Infinity;
-        let closestForLeft = null, minDistLeft = Infinity;
-        let closestForRight = null, minDistRight = Infinity;
+        let closestForTop = null,
+            minDistTop = Infinity;
+        let closestForLeft = null,
+            minDistLeft = Infinity;
+        let closestForRight = null,
+            minDistRight = Infinity;
 
         for (const ball of this.balls) {
             // Top AI (at Z = -18)
-            const distTop = Math.sqrt((ball.x - this.topPaddleX) ** 2 + (ball.z - (-18)) ** 2);
+            const distTop = Math.sqrt((ball.x - this.topPaddleX) ** 2 + (ball.z - -18) ** 2);
             if (distTop < minDistTop) {
                 minDistTop = distTop;
                 closestForTop = ball;
             }
-            
+
             // Left AI (at X = -13.5)
-            const distLeft = Math.sqrt((ball.x - (-13.5)) ** 2 + (ball.z - this.leftPaddleZ) ** 2);
+            const distLeft = Math.sqrt((ball.x - -13.5) ** 2 + (ball.z - this.leftPaddleZ) ** 2);
             if (distLeft < minDistLeft) {
                 minDistLeft = distLeft;
                 closestForLeft = ball;
             }
-            
+
             // Right AI (at X = 13.5)
             const distRight = Math.sqrt((ball.x - 13.5) ** 2 + (ball.z - this.rightPaddleZ) ** 2);
             if (distRight < minDistRight) {
@@ -488,33 +495,63 @@ class BallistixGame {
         // Top AI defends Z = -18
         if (this.lives.top > 0) {
             const ballPos = closestForTop ? closestForTop.x : 0;
-            const aiRes = this.updateAIBehavior('top', dt, ballPos, this.topPaddleX, horizPaddleLimit);
+            const aiRes = this.updateAIBehavior(
+                'top',
+                dt,
+                ballPos,
+                this.topPaddleX,
+                horizPaddleLimit
+            );
             this.topPaddleX = aiRes.newPos;
             if (this.topPaddle) {
                 this.topPaddle.position.x = this.topPaddleX;
-                this.topPaddle.rotation.z = THREE.MathUtils.lerp(this.topPaddle.rotation.z, -aiRes.moveDir * 0.12, 0.15);
+                this.topPaddle.rotation.z = THREE.MathUtils.lerp(
+                    this.topPaddle.rotation.z,
+                    -aiRes.moveDir * 0.12,
+                    0.15
+                );
             }
         }
 
         // Left AI defends X = -13.5
         if (this.lives.left > 0) {
             const ballPos = closestForLeft ? closestForLeft.z : 0;
-            const aiRes = this.updateAIBehavior('left', dt, ballPos, this.leftPaddleZ, vertPaddleLimit);
+            const aiRes = this.updateAIBehavior(
+                'left',
+                dt,
+                ballPos,
+                this.leftPaddleZ,
+                vertPaddleLimit
+            );
             this.leftPaddleZ = aiRes.newPos;
             if (this.leftPaddle) {
                 this.leftPaddle.position.z = this.leftPaddleZ;
-                this.leftPaddle.rotation.x = THREE.MathUtils.lerp(this.leftPaddle.rotation.x, aiRes.moveDir * 0.12, 0.15);
+                this.leftPaddle.rotation.x = THREE.MathUtils.lerp(
+                    this.leftPaddle.rotation.x,
+                    aiRes.moveDir * 0.12,
+                    0.15
+                );
             }
         }
 
         // Right AI defends X = 13.5
         if (this.lives.right > 0) {
             const ballPos = closestForRight ? closestForRight.z : 0;
-            const aiRes = this.updateAIBehavior('right', dt, ballPos, this.rightPaddleZ, vertPaddleLimit);
+            const aiRes = this.updateAIBehavior(
+                'right',
+                dt,
+                ballPos,
+                this.rightPaddleZ,
+                vertPaddleLimit
+            );
             this.rightPaddleZ = aiRes.newPos;
             if (this.rightPaddle) {
                 this.rightPaddle.position.z = this.rightPaddleZ;
-                this.rightPaddle.rotation.x = THREE.MathUtils.lerp(this.rightPaddle.rotation.x, aiRes.moveDir * 0.12, 0.15);
+                this.rightPaddle.rotation.x = THREE.MathUtils.lerp(
+                    this.rightPaddle.rotation.x,
+                    aiRes.moveDir * 0.12,
+                    0.15
+                );
             }
         }
 
@@ -570,13 +607,17 @@ class BallistixGame {
                 const paddleFrontBottom = this.paddleY - 0.6;
                 const paddleBackBottom = this.paddleY + 0.6;
                 if (ball.vz > 0) {
-                    if (ball.z + this.ballRadius >= paddleFrontBottom && ball.z - this.ballRadius <= paddleBackBottom) {
-                        if (ball.x + this.ballRadius >= this.paddleX - paddleHalfWidth && 
-                            ball.x - this.ballRadius <= this.paddleX + paddleHalfWidth) {
-                            
+                    if (
+                        ball.z + this.ballRadius >= paddleFrontBottom &&
+                        ball.z - this.ballRadius <= paddleBackBottom
+                    ) {
+                        if (
+                            ball.x + this.ballRadius >= this.paddleX - paddleHalfWidth &&
+                            ball.x - this.ballRadius <= this.paddleX + paddleHalfWidth
+                        ) {
                             // Prevent stuck: reposition ball on front of paddle
                             ball.z = paddleFrontBottom - this.ballRadius;
-                            
+
                             // Curved Paddle Ball Deflection
                             const dx = ball.x - this.paddleX;
                             const r = Math.max(-1, Math.min(1, dx / paddleHalfWidth));
@@ -615,13 +656,17 @@ class BallistixGame {
                 const paddleFrontTop = -this.paddleY + 0.6;
                 const paddleBackTop = -this.paddleY - 0.6;
                 if (ball.vz < 0) {
-                    if (ball.z - this.ballRadius <= paddleFrontTop && ball.z + this.ballRadius >= paddleBackTop) {
-                        if (ball.x + this.ballRadius >= this.topPaddleX - paddleHalfWidth && 
-                            ball.x - this.ballRadius <= this.topPaddleX + paddleHalfWidth) {
-                            
+                    if (
+                        ball.z - this.ballRadius <= paddleFrontTop &&
+                        ball.z + this.ballRadius >= paddleBackTop
+                    ) {
+                        if (
+                            ball.x + this.ballRadius >= this.topPaddleX - paddleHalfWidth &&
+                            ball.x - this.ballRadius <= this.topPaddleX + paddleHalfWidth
+                        ) {
                             // Prevent stuck: reposition ball on front of paddle
                             ball.z = paddleFrontTop + this.ballRadius;
-                            
+
                             // Curved Paddle Ball Deflection
                             const dx = ball.x - this.topPaddleX;
                             const r = Math.max(-1, Math.min(1, dx / paddleHalfWidth));
@@ -660,13 +705,17 @@ class BallistixGame {
                 const paddleFrontLeft = -this.paddleXOffset + 0.6;
                 const paddleBackLeft = -this.paddleXOffset - 0.6;
                 if (ball.vx < 0) {
-                    if (ball.x - this.ballRadius <= paddleFrontLeft && ball.x + this.ballRadius >= paddleBackLeft) {
-                        if (ball.z + this.ballRadius >= this.leftPaddleZ - paddleHalfWidth && 
-                            ball.z - this.ballRadius <= this.leftPaddleZ + paddleHalfWidth) {
-                            
+                    if (
+                        ball.x - this.ballRadius <= paddleFrontLeft &&
+                        ball.x + this.ballRadius >= paddleBackLeft
+                    ) {
+                        if (
+                            ball.z + this.ballRadius >= this.leftPaddleZ - paddleHalfWidth &&
+                            ball.z - this.ballRadius <= this.leftPaddleZ + paddleHalfWidth
+                        ) {
                             // Prevent stuck: reposition ball on front of paddle
                             ball.x = paddleFrontLeft + this.ballRadius;
-                            
+
                             // Curved Paddle Ball Deflection
                             const dz = ball.z - this.leftPaddleZ;
                             const r = Math.max(-1, Math.min(1, dz / paddleHalfWidth));
@@ -705,13 +754,17 @@ class BallistixGame {
                 const paddleFrontRight = this.paddleXOffset - 0.6;
                 const paddleBackRight = this.paddleXOffset + 0.6;
                 if (ball.vx > 0) {
-                    if (ball.x + this.ballRadius >= paddleFrontRight && ball.x - this.ballRadius <= paddleBackRight) {
-                        if (ball.z + this.ballRadius >= this.rightPaddleZ - paddleHalfWidth && 
-                            ball.z - this.ballRadius <= this.rightPaddleZ + paddleHalfWidth) {
-                            
+                    if (
+                        ball.x + this.ballRadius >= paddleFrontRight &&
+                        ball.x - this.ballRadius <= paddleBackRight
+                    ) {
+                        if (
+                            ball.z + this.ballRadius >= this.rightPaddleZ - paddleHalfWidth &&
+                            ball.z - this.ballRadius <= this.rightPaddleZ + paddleHalfWidth
+                        ) {
                             // Prevent stuck: reposition ball on front of paddle
                             ball.x = paddleFrontRight - this.ballRadius;
-                            
+
                             // Curved Paddle Ball Deflection
                             const dz = ball.z - this.rightPaddleZ;
                             const r = Math.max(-1, Math.min(1, dz / paddleHalfWidth));
@@ -746,7 +799,11 @@ class BallistixGame {
             }
 
             // Smoothly decay emissive flashes
-            ball.mesh.material.emissiveIntensity = THREE.MathUtils.lerp(ball.mesh.material.emissiveIntensity, 0.5, 0.1);
+            ball.mesh.material.emissiveIntensity = THREE.MathUtils.lerp(
+                ball.mesh.material.emissiveIntensity,
+                0.5,
+                0.1
+            );
 
             // 4d. Out of Bounds Check (Remove ball from array and subtract life)
             // Player Goal Miss (Bottom edge)
@@ -813,20 +870,20 @@ class BallistixGame {
      */
     deductLife(side, ball) {
         if (this.gameOver) return;
-        
+
         this.lives[side]--;
         if (this.lives[side] < 0) this.lives[side] = 0;
-        
+
         // Update DOM display
         const valEl = document.getElementById(`life-val-${side}`);
         if (valEl) {
             valEl.textContent = this.lives[side];
-            
+
             // Pop scaling / red animation
             valEl.style.transform = 'scale(1.4)';
             valEl.style.color = '#ff0055';
             valEl.style.transition = 'none';
-            
+
             setTimeout(() => {
                 valEl.style.transition = 'all 0.4s ease';
                 valEl.style.transform = 'scale(1.0)';
@@ -840,62 +897,62 @@ class BallistixGame {
                 valEl.style.color = colors[side];
             }, 150);
         }
-        
+
         // Flash screen red if it's the human player
         if (side === 'player') {
             const bodyEl = document.body;
             bodyEl.style.boxShadow = 'inset 0 0 80px rgba(255, 0, 127, 0.6)';
             bodyEl.style.transition = 'none';
-            
+
             setTimeout(() => {
                 bodyEl.style.transition = 'box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
                 bodyEl.style.boxShadow = 'none';
             }, 100);
-            
-            this.showNotification("Miss! -1 Life", "#ff007f");
+
+            this.showNotification('Miss! -1 Life', '#ff007f');
         } else {
             const names = {
-                top: "Top AI",
-                left: "Left AI",
-                right: "Right AI"
+                top: 'Top AI',
+                left: 'Left AI',
+                right: 'Right AI'
             };
             const colors = {
-                top: "#ffbb00",
-                left: "#39ff14",
-                right: "#b026ff"
+                top: '#ffbb00',
+                left: '#39ff14',
+                right: '#b026ff'
             };
             this.showNotification(`${names[side]} Goal!`, colors[side]);
         }
-        
+
         // Explode particles at the goal line
         const ballColor = ball.mesh.material.color.getHex();
         this.createCollisionImpact(ball.x, ball.z, ballColor, 18);
-        
+
         // Check if dead
         if (this.lives[side] === 0) {
             const panelEl = document.getElementById(`life-${side}`);
             if (panelEl) {
                 panelEl.classList.add('dead');
             }
-            
+
             // Destroy paddle and create solid wall
             this.destroyPaddle(side);
             this.spawnSolidWall(side);
-            
+
             const names = {
-                player: "Player 1",
-                top: "Top AI",
-                left: "Left AI",
-                right: "Right AI"
+                player: 'Player 1',
+                top: 'Top AI',
+                left: 'Left AI',
+                right: 'Right AI'
             };
             const colors = {
-                player: "#00f0ff",
-                top: "#ffbb00",
-                left: "#39ff14",
-                right: "#b026ff"
+                player: '#00f0ff',
+                top: '#ffbb00',
+                left: '#39ff14',
+                right: '#b026ff'
             };
             this.showNotification(`${names[side]} ELIMINATED!`, colors[side]);
-            
+
             // Check win/loss conditions
             const survivors = Object.keys(this.lives).filter(k => this.lives[k] > 0);
             if (survivors.length <= 1) {
@@ -925,8 +982,13 @@ class BallistixGame {
 
         if (paddleMesh) {
             const paddleColor = paddleMesh.material.color.getHex();
-            this.createCollisionImpact(paddleMesh.position.x, paddleMesh.position.z, paddleColor, 35);
-            
+            this.createCollisionImpact(
+                paddleMesh.position.x,
+                paddleMesh.position.z,
+                paddleColor,
+                35
+            );
+
             this.arenaGroup.remove(paddleMesh);
             paddleMesh.geometry.dispose();
             paddleMesh.material.dispose();
@@ -940,7 +1002,7 @@ class BallistixGame {
         let wallGeo, posX, posZ, color;
         const wallHeight = 2.0;
         const wallThickness = 0.3;
-        
+
         if (side === 'player') {
             wallGeo = new THREE.BoxGeometry(this.arenaWidth, wallHeight, wallThickness);
             posX = 0;
@@ -977,10 +1039,10 @@ class BallistixGame {
         wallMesh.position.set(posX, wallHeight / 2, posZ);
         wallMesh.castShadow = true;
         wallMesh.receiveShadow = true;
-        
+
         this.arenaGroup.add(wallMesh);
         this.walls[side] = wallMesh;
-        
+
         // Spawn particles along the wall
         if (side === 'player' || side === 'top') {
             for (let x = -13; x <= 13; x += 2) {
@@ -1005,14 +1067,14 @@ class BallistixGame {
      */
     triggerGameOver(winner) {
         this.gameOver = true;
-        
+
         const existing = document.getElementById('game-over-overlay');
         if (existing) existing.remove();
-        
-        const isPlayerVictory = (winner === 'player');
+
+        const isPlayerVictory = winner === 'player';
         const overlay = document.createElement('div');
         overlay.id = 'game-over-overlay';
-        
+
         overlay.style.position = 'absolute';
         overlay.style.top = '0';
         overlay.style.left = '0';
@@ -1028,11 +1090,11 @@ class BallistixGame {
         overlay.style.zIndex = '100';
         overlay.style.opacity = '0';
         overlay.style.transition = 'opacity 0.8s ease';
-        
+
         const titleColor = isPlayerVictory ? '#00f0ff' : '#ff007f';
         const titleText = isPlayerVictory ? 'VICTORY' : 'GAME OVER';
         const glowColor = isPlayerVictory ? 'rgba(0, 240, 255, 0.6)' : 'rgba(255, 0, 127, 0.6)';
-        
+
         const winnerNames = {
             player: 'Player 1',
             top: 'Top AI',
@@ -1040,7 +1102,7 @@ class BallistixGame {
             right: 'Right AI'
         };
         const winnerName = winnerNames[winner] || 'No one';
-        
+
         overlay.innerHTML = `
             <div style="text-align: center; padding: 40px; border-radius: 24px; background: rgba(15, 18, 30, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1); max-width: 450px; width: 90%;">
                 <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 3rem; font-weight: 800; letter-spacing: 4px; color: ${titleColor}; text-shadow: 0 0 30px ${glowColor}; margin: 0 0 10px 0; text-transform: uppercase;">
@@ -1054,9 +1116,9 @@ class BallistixGame {
                 </button>
             </div>
         `;
-        
+
         document.body.appendChild(overlay);
-        
+
         const btn = overlay.querySelector('#restart-btn');
         btn.addEventListener('mouseenter', () => {
             btn.style.transform = 'scale(1.05)';
@@ -1069,7 +1131,7 @@ class BallistixGame {
         btn.addEventListener('click', () => {
             this.resetGame();
         });
-        
+
         setTimeout(() => {
             overlay.style.opacity = '1';
         }, 50);
@@ -1084,11 +1146,11 @@ class BallistixGame {
             overlay.style.opacity = '0';
             setTimeout(() => overlay.remove(), 800);
         }
-        
+
         for (let i = this.balls.length - 1; i >= 0; i--) {
             this.removeBallAt(i);
         }
-        
+
         for (const side in this.walls) {
             if (this.walls[side]) {
                 this.arenaGroup.remove(this.walls[side]);
@@ -1097,7 +1159,7 @@ class BallistixGame {
                 this.walls[side] = null;
             }
         }
-        
+
         if (this.paddle) {
             this.arenaGroup.remove(this.paddle);
             this.paddle.geometry.dispose();
@@ -1122,7 +1184,7 @@ class BallistixGame {
             this.rightPaddle.material.dispose();
             this.rightPaddle = null;
         }
-        
+
         this.score = 0;
         this.lives = {
             player: 15,
@@ -1137,17 +1199,17 @@ class BallistixGame {
         this.leftPaddleZ = 0;
         this.rightPaddleZ = 0;
         this.lastSpawnedSpeed = 15.0; // Reset speed
-        
+
         // Reset AI states
         this.aiStates = {
             top: { state: 'normal', timer: 0.0 },
             left: { state: 'normal', timer: 0.0 },
             right: { state: 'normal', timer: 0.0 }
         };
-        
+
         const paddleGeoH = new THREE.BoxGeometry(this.paddleWidth, 0.8, 1.2);
         const paddleGeoV = new THREE.BoxGeometry(1.2, 0.8, this.paddleWidth);
-        
+
         const playerMat = new THREE.MeshStandardMaterial({
             color: 0x00f0ff,
             roughness: 0.1,
@@ -1160,7 +1222,7 @@ class BallistixGame {
         this.paddle.castShadow = true;
         this.paddle.receiveShadow = true;
         this.arenaGroup.add(this.paddle);
-        
+
         const topMat = new THREE.MeshStandardMaterial({
             color: 0xffbb00,
             roughness: 0.1,
@@ -1173,7 +1235,7 @@ class BallistixGame {
         this.topPaddle.castShadow = true;
         this.topPaddle.receiveShadow = true;
         this.arenaGroup.add(this.topPaddle);
-        
+
         const leftMat = new THREE.MeshStandardMaterial({
             color: 0x39ff14,
             roughness: 0.1,
@@ -1186,7 +1248,7 @@ class BallistixGame {
         this.leftPaddle.castShadow = true;
         this.leftPaddle.receiveShadow = true;
         this.arenaGroup.add(this.leftPaddle);
-        
+
         const rightMat = new THREE.MeshStandardMaterial({
             color: 0xb026ff,
             roughness: 0.1,
@@ -1199,7 +1261,7 @@ class BallistixGame {
         this.rightPaddle.castShadow = true;
         this.rightPaddle.receiveShadow = true;
         this.arenaGroup.add(this.rightPaddle);
-        
+
         for (const side of ['player', 'top', 'left', 'right']) {
             const valEl = document.getElementById(`life-val-${side}`);
             if (valEl) {
@@ -1210,7 +1272,7 @@ class BallistixGame {
                 panelEl.classList.remove('dead');
             }
         }
-        
+
         this.spawnBall(true);
     }
 
@@ -1285,7 +1347,7 @@ class BallistixGame {
     destroy() {
         if (this.arenaGroup) {
             window.engine.scene.remove(this.arenaGroup);
-            this.arenaGroup.traverse((object) => {
+            this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
                     if (Array.isArray(object.material)) {

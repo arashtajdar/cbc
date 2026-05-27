@@ -1,7 +1,7 @@
 /**
  * POLAR PUSH gameplay logic
  * Standalone Three.js minigame class for "Polar Push".
- * 
+ *
  * Features:
  * - Slippery ice platform floating in freezing water.
  * - custom momentum-based movement & friction sliding (velocity * 0.98).
@@ -37,13 +37,13 @@ class PolarPushGame {
     setup() {
         const engine = window.engine;
         if (!engine) {
-            console.error("PolarPush: engine.js not found in global context!");
+            console.error('PolarPush: engine.js not found in global context!');
             return;
         }
 
         // 1. Store original camera position to restore on exit
         this.originalCameraPos = engine.camera.position.clone();
-        
+
         // Set dramatic tilted top-down angle looking down at platform
         engine.camera.position.set(0, 24, 16);
         engine.camera.lookAt(0, 0, 0);
@@ -54,7 +54,12 @@ class PolarPushGame {
         engine.scene.add(this.arenaGroup);
 
         // 3. Ice Platform Slab (Circular Cylinder)
-        const iceGeo = new THREE.CylinderGeometry(this.platformRadius, this.platformRadius, 1.0, 32);
+        const iceGeo = new THREE.CylinderGeometry(
+            this.platformRadius,
+            this.platformRadius,
+            1.0,
+            32
+        );
         const iceMat = new THREE.MeshStandardMaterial({
             color: 0x88ccff, // Frosty pale blue
             roughness: 0.05, // Glossy / highly reflective
@@ -68,7 +73,11 @@ class PolarPushGame {
         this.arenaGroup.add(platform);
 
         // Subtly glowing outer rim for the ice platform
-        const rimGeo = new THREE.RingGeometry(this.platformRadius - 0.1, this.platformRadius + 0.1, 64);
+        const rimGeo = new THREE.RingGeometry(
+            this.platformRadius - 0.1,
+            this.platformRadius + 0.1,
+            64
+        );
         const rimMat = new THREE.MeshBasicMaterial({
             color: 0x00f0ff,
             side: THREE.DoubleSide,
@@ -105,7 +114,7 @@ class PolarPushGame {
                 opacity: 0.8
             });
             const floe = new THREE.Mesh(floeGeo, floeMat);
-            
+
             const angle = Math.random() * Math.PI * 2;
             const dist = 16 + Math.random() * 8;
             floe.position.set(Math.cos(angle) * dist, -1.0, Math.sin(angle) * dist);
@@ -138,10 +147,10 @@ class PolarPushGame {
         const chars = state.characters;
 
         const positions = [
-            { x: -5, z: 5 },   // P1 (Bottom Left)
-            { x: -5, z: -5 },  // P2 (Top Left, AI)
-            { x: 5,  z: -5 },  // P3 (Top Right, AI)
-            { x: 5,  z: 5 }    // P4 (Bottom Right, AI)
+            { x: -5, z: 5 }, // P1 (Bottom Left)
+            { x: -5, z: -5 }, // P2 (Top Left, AI)
+            { x: 5, z: -5 }, // P3 (Top Right, AI)
+            { x: 5, z: 5 } // P4 (Bottom Right, AI)
         ];
 
         const playerKeys = ['p1', 'p2', 'p3', 'p4'];
@@ -151,34 +160,11 @@ class PolarPushGame {
             const charData = chars[charIdx];
             const pos = positions[idx];
 
-            const isP1 = (idx === 0);
+            const isP1 = idx === 0;
             const pColor = isP1 ? this.playerColor : charData.color;
 
-            let geom;
-            let meshY = 0.5;
-            if (charData.shape === 'cube') {
-                geom = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-                meshY = 0.45;
-            } else if (charData.shape === 'sphere') {
-                geom = new THREE.SphereGeometry(0.5, 32, 32);
-                meshY = 0.5;
-            } else if (charData.shape === 'cylinder') {
-                geom = new THREE.CylinderGeometry(0.4, 0.4, 0.95, 32);
-                meshY = 0.48;
-            } else if (charData.shape === 'cone') {
-                geom = new THREE.ConeGeometry(0.45, 1.0, 32);
-                meshY = 0.5;
-            }
-
-            const mat = new THREE.MeshStandardMaterial({
-                color: pColor,
-                roughness: 0.15,
-                metalness: 0.8,
-                emissive: pColor,
-                emissiveIntensity: 0.25
-            });
-
-            const mesh = new THREE.Mesh(geom, mat);
+            let meshY = 0;
+            const mesh = window.createArticulatedCharacter(charData.shape, pColor);
             mesh.position.set(pos.x, meshY, pos.z);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -190,7 +176,7 @@ class PolarPushGame {
 
             this.players.push({
                 id: idx + 1,
-                name: idx === 0 ? "Player 1" : `Opponent ${idx}`,
+                name: idx === 0 ? 'Player 1' : `Opponent ${idx}`,
                 mesh: mesh,
                 shape: charData.shape,
                 color: pColor,
@@ -199,7 +185,7 @@ class PolarPushGame {
                 isDead: false,
                 isEliminated: false,
                 isOnIce: true,
-                facingAngle: idx === 0 ? 0 : Math.PI, 
+                facingAngle: idx === 0 ? 0 : Math.PI,
                 vx: 0,
                 vy: 0,
                 vz: 0,
@@ -268,11 +254,12 @@ class PolarPushGame {
         // Update layouts in standard instructions hud
         const instructionsText = document.querySelector('.instruction-text');
         if (instructionsText) {
-            instructionsText.textContent = "WASD/Arrows to slide. Spacebar to DASH & RAM. Knock all other players off the slippery ice platform to win!";
+            instructionsText.textContent =
+                'WASD/Arrows to slide. Spacebar to DASH & RAM. Knock all other players off the slippery ice platform to win!';
         }
         const instructionTag = document.querySelector('.instruction-tag');
         if (instructionTag) {
-            instructionTag.textContent = "Polar Push Game";
+            instructionTag.textContent = 'Polar Push Game';
         }
     }
 
@@ -283,8 +270,8 @@ class PolarPushGame {
             const dashFill = document.getElementById(`hud-dash-fill-${p.id}`);
 
             if (p.isEliminated) {
-                if (statusLabel && statusLabel.textContent !== "OUT") {
-                    statusLabel.textContent = "OUT";
+                if (statusLabel && statusLabel.textContent !== 'OUT') {
+                    statusLabel.textContent = 'OUT';
                     statusLabel.style.background = 'rgba(255, 0, 127, 0.15)';
                     statusLabel.style.color = '#ff007f';
                     statusLabel.style.textShadow = '0 0 4px #ff007f';
@@ -298,7 +285,8 @@ class PolarPushGame {
                 }
             } else {
                 if (dashFill) {
-                    const pct = p.dashCooldown <= 0 ? 100 : Math.max(0, (1.0 - p.dashCooldown / 1.5) * 100);
+                    const pct =
+                        p.dashCooldown <= 0 ? 100 : Math.max(0, (1.0 - p.dashCooldown / 1.5) * 100);
                     dashFill.style.width = `${pct}%`;
                     dashFill.style.background = p.dashCooldown <= 0 ? '#00f0ff' : '#718096';
                     dashFill.style.boxShadow = p.dashCooldown <= 0 ? '0 0 6px #00f0ff' : 'none';
@@ -323,7 +311,9 @@ class PolarPushGame {
 
         this.particles.push({
             mesh: trailMesh,
-            vx: 0, vy: 0, vz: 0,
+            vx: 0,
+            vy: 0,
+            vz: 0,
             life: 0.4,
             decay: 2.5
         });
@@ -350,7 +340,9 @@ class PolarPushGame {
 
             this.particles.push({
                 mesh,
-                vx, vy, vz,
+                vx,
+                vy,
+                vz,
                 life: 1.0,
                 decay: 1.4 + Math.random() * 1.2
             });
@@ -378,7 +370,9 @@ class PolarPushGame {
 
             this.particles.push({
                 mesh,
-                vx, vy, vz,
+                vx,
+                vy,
+                vz,
                 life: 0.8,
                 decay: 2.0 + Math.random() * 1.5
             });
@@ -395,7 +389,8 @@ class PolarPushGame {
         const elapsed = window.engine.clock.getElapsedTime();
         this.decorFloes.forEach(floe => {
             floe.mesh.rotation.y += floe.rotSpeed * dt;
-            floe.mesh.position.y = floe.baseY + Math.sin(elapsed * floe.bobSpeed + floe.bobOffset) * 0.08;
+            floe.mesh.position.y =
+                floe.baseY + Math.sin(elapsed * floe.bobSpeed + floe.bobOffset) * 0.08;
         });
 
         // 2. Human player controls
@@ -403,7 +398,7 @@ class PolarPushGame {
         if (p1 && !p1.isEliminated) {
             // Cool down timer decrement
             if (p1.dashCooldown > 0) p1.dashCooldown -= dt;
-            
+
             // Dash Timer decrement
             if (p1.isDashing) {
                 p1.dashTimer -= dt;
@@ -435,7 +430,7 @@ class PolarPushGame {
                     const targetDirZ = -dirX;
 
                     p1.facingAngle = Math.atan2(-targetDirZ, targetDirX);
-                    
+
                     // Smoothly rotate character mesh
                     let diff = p1.facingAngle - p1.mesh.rotation.y;
                     while (diff < -Math.PI) diff += Math.PI * 2;
@@ -462,7 +457,7 @@ class PolarPushGame {
                     p1.trailTimer = 0.0;
 
                     this.spawnDashTrail(p1);
-                    this.showNotification("DASH!", p1.hex);
+                    this.showNotification('DASH!', p1.hex);
                 }
             }
         }
@@ -484,6 +479,15 @@ class PolarPushGame {
             p.mesh.position.x += p.vx * dt;
             p.mesh.position.z += p.vz * dt;
 
+            const currentSpeed = Math.sqrt(p.vx * p.vx + p.vz * p.vz);
+            if (window.animateArticulatedCharacter) {
+                window.animateArticulatedCharacter(
+                    p.mesh,
+                    currentSpeed,
+                    window.engine.clock.getElapsedTime()
+                );
+            }
+
             // Spawn trail particles during dash
             if (p.isDashing) {
                 p.trailTimer += dt;
@@ -494,7 +498,9 @@ class PolarPushGame {
             }
 
             // Edge checks relative to center (0,0)
-            const distFromCenter = Math.sqrt(p.mesh.position.x * p.mesh.position.x + p.mesh.position.z * p.mesh.position.z);
+            const distFromCenter = Math.sqrt(
+                p.mesh.position.x * p.mesh.position.x + p.mesh.position.z * p.mesh.position.z
+            );
             if (distFromCenter > this.platformRadius) {
                 p.isOnIce = false;
                 p.isDashing = false; // Cancel active dash off platform
@@ -576,15 +582,27 @@ class PolarPushGame {
                         new_v2n += 16.0; // blast opponent away!
                         p1.isDashing = false;
                         p1.dashTimer = 0;
-                        this.spawnCollisionImpactParticles(p2.mesh.position.x, 0.4, p2.mesh.position.z, p1.color, 15);
-                        this.showNotification("RAMMED!", p1.hex);
+                        this.spawnCollisionImpactParticles(
+                            p2.mesh.position.x,
+                            0.4,
+                            p2.mesh.position.z,
+                            p1.color,
+                            15
+                        );
+                        this.showNotification('RAMMED!', p1.hex);
                     }
                     if (p2.isDashing) {
                         new_v1n -= 16.0; // blast p1 away!
                         p2.isDashing = false;
                         p2.dashTimer = 0;
-                        this.spawnCollisionImpactParticles(p1.mesh.position.x, 0.4, p1.mesh.position.z, p2.color, 15);
-                        this.showNotification("RAMMED!", p2.hex);
+                        this.spawnCollisionImpactParticles(
+                            p1.mesh.position.x,
+                            0.4,
+                            p1.mesh.position.z,
+                            p2.color,
+                            15
+                        );
+                        this.showNotification('RAMMED!', p2.hex);
                     }
 
                     p1.vx += (new_v1n - v1n) * nx;
@@ -602,7 +620,7 @@ class PolarPushGame {
 
             // AI timers
             if (ai.dashCooldown > 0) ai.dashCooldown -= dt;
-            
+
             if (ai.isDashing) {
                 ai.dashTimer -= dt;
                 if (ai.dashTimer <= 0) {
@@ -618,8 +636,10 @@ class PolarPushGame {
             if (!ai.isOnIce) return;
 
             // Compute distance from center of the circular ice platform
-            const centerDist = Math.sqrt(ai.mesh.position.x * ai.mesh.position.x + ai.mesh.position.z * ai.mesh.position.z);
-            
+            const centerDist = Math.sqrt(
+                ai.mesh.position.x * ai.mesh.position.x + ai.mesh.position.z * ai.mesh.position.z
+            );
+
             if (centerDist > 9.0) {
                 // Priority A: Slide back to safety (center)
                 const dirX = -ai.mesh.position.x / centerDist;
@@ -639,7 +659,10 @@ class PolarPushGame {
                 this.players.forEach(p => {
                     if (p.id === ai.id || p.isEliminated) return;
 
-                    const pDist = Math.sqrt(p.mesh.position.x * p.mesh.position.x + p.mesh.position.z * p.mesh.position.z);
+                    const pDist = Math.sqrt(
+                        p.mesh.position.x * p.mesh.position.x +
+                            p.mesh.position.z * p.mesh.position.z
+                    );
                     if (pDist > maxEdgeDist) {
                         maxEdgeDist = pDist;
                         target = p;
@@ -663,7 +686,12 @@ class PolarPushGame {
                         ai.vz += dirZ * accel;
 
                         // Dash Ram check: if aligned and close enough, and random trigger chance is met
-                        if (dist > 3.0 && dist < 6.5 && ai.dashCooldown <= 0 && Math.random() < 0.06) {
+                        if (
+                            dist > 3.0 &&
+                            dist < 6.5 &&
+                            ai.dashCooldown <= 0 &&
+                            Math.random() < 0.06
+                        ) {
                             const dashSpeed = 26.0;
                             ai.vx = dirX * dashSpeed;
                             ai.vz = dirZ * dashSpeed;
@@ -673,7 +701,7 @@ class PolarPushGame {
                             ai.trailTimer = 0.0;
 
                             this.spawnDashTrail(ai);
-                            this.showNotification("DASH!", ai.hex);
+                            this.showNotification('DASH!', ai.hex);
                         }
                     }
                 } else {
@@ -838,13 +866,13 @@ class PolarPushGame {
         notif.style.backdropFilter = 'blur(10px)';
         notif.style.webkitBackdropFilter = 'blur(10px)';
         notif.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        
+
         document.body.appendChild(notif);
         notif.offsetHeight; // force reflow
-        
+
         notif.style.opacity = '1';
         notif.style.transform = 'translateX(-50%) scale(1.0)';
-        
+
         setTimeout(() => {
             notif.style.opacity = '0';
             notif.style.transform = 'translateX(-50%) scale(0.8) translateY(-25px)';
@@ -859,7 +887,7 @@ class PolarPushGame {
     destroy() {
         if (this.arenaGroup) {
             window.engine.scene.remove(this.arenaGroup);
-            this.arenaGroup.traverse((object) => {
+            this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
                     if (Array.isArray(object.material)) {

@@ -1,7 +1,7 @@
 /**
  * CRATE CRUSH gameplay logic
  * Standalone Three.js minigame class for "Crate Crush".
- * 
+ *
  * Features:
  * - 1 Human Player (controlled via WASD/Arrows + Space)
  * - 3 AI Opponent characters (wander, lift crates, aim, and throw)
@@ -20,18 +20,18 @@ class CrateCrushGame {
 
         this.gameOver = false;
         this.arenaSize = 20;
-        
+
         // Groups & Pools
         this.arenaGroup = null;
-        this.players = []; 
-        this.crates = [];  
+        this.players = [];
+        this.crates = [];
         this.particles = [];
-        this.explosions = []; 
-        
+        this.explosions = [];
+
         // Spawning timer
         this.crateSpawnTimer = 0.0;
-        this.crateSpawnInterval = 3.0; 
-        
+        this.crateSpawnInterval = 3.0;
+
         this.spacePressedLastFrame = false;
 
         this.setup();
@@ -40,7 +40,7 @@ class CrateCrushGame {
     setup() {
         const engine = window.engine;
         if (!engine) {
-            console.error("CrateCrush: engine.js not found in global context!");
+            console.error('CrateCrush: engine.js not found in global context!');
             return;
         }
 
@@ -57,7 +57,7 @@ class CrateCrushGame {
             metalness: 0.5
         });
         const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.position.set(0, -0.2, 0); 
+        floor.position.set(0, -0.2, 0);
         floor.receiveShadow = true;
         this.arenaGroup.add(floor);
 
@@ -80,19 +80,19 @@ class CrateCrushGame {
         const wallGeoV = new THREE.BoxGeometry(wThick, wHeight, this.arenaSize + wThick);
 
         const wTop = new THREE.Mesh(wallGeoH, wallMat);
-        wTop.position.set(0, wHeight/2, -this.arenaSize/2 - wThick/2);
+        wTop.position.set(0, wHeight / 2, -this.arenaSize / 2 - wThick / 2);
         this.arenaGroup.add(wTop);
 
         const wBottom = new THREE.Mesh(wallGeoH, wallMat);
-        wBottom.position.set(0, wHeight/2, this.arenaSize/2 + wThick/2);
+        wBottom.position.set(0, wHeight / 2, this.arenaSize / 2 + wThick / 2);
         this.arenaGroup.add(wBottom);
 
         const wLeft = new THREE.Mesh(wallGeoV, wallMat);
-        wLeft.position.set(-this.arenaSize/2 - wThick/2, wHeight/2, 0);
+        wLeft.position.set(-this.arenaSize / 2 - wThick / 2, wHeight / 2, 0);
         this.arenaGroup.add(wLeft);
 
         const wRight = new THREE.Mesh(wallGeoV, wallMat);
-        wRight.position.set(this.arenaSize/2 + wThick/2, wHeight/2, 0);
+        wRight.position.set(this.arenaSize / 2 + wThick / 2, wHeight / 2, 0);
         this.arenaGroup.add(wRight);
 
         // 4. Initialize Players (Human + 3 AIs)
@@ -117,10 +117,10 @@ class CrateCrushGame {
         const chars = state.characters;
 
         const positions = [
-            { x: -8, z: 8 },   // P1 (Bottom Left)
-            { x: -8, z: -8 },  // P2 (Top Left, AI)
-            { x: 8,  z: -8 },  // P3 (Top Right, AI)
-            { x: 8,  z: 8 }    // P4 (Bottom Right, AI)
+            { x: -8, z: 8 }, // P1 (Bottom Left)
+            { x: -8, z: -8 }, // P2 (Top Left, AI)
+            { x: 8, z: -8 }, // P3 (Top Right, AI)
+            { x: 8, z: 8 } // P4 (Bottom Right, AI)
         ];
 
         const playerKeys = ['p1', 'p2', 'p3', 'p4'];
@@ -130,34 +130,11 @@ class CrateCrushGame {
             const charData = chars[charIdx];
             const pos = positions[idx];
 
-            const isP1 = (idx === 0);
+            const isP1 = idx === 0;
             const pColor = isP1 ? this.playerColor : charData.color;
 
-            let geom;
-            let meshY = 0.5;
-            if (charData.shape === 'cube') {
-                geom = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-                meshY = 0.45;
-            } else if (charData.shape === 'sphere') {
-                geom = new THREE.SphereGeometry(0.5, 32, 32);
-                meshY = 0.5;
-            } else if (charData.shape === 'cylinder') {
-                geom = new THREE.CylinderGeometry(0.4, 0.4, 0.95, 32);
-                meshY = 0.48;
-            } else if (charData.shape === 'cone') {
-                geom = new THREE.ConeGeometry(0.45, 1.0, 32);
-                meshY = 0.5;
-            }
-
-            const mat = new THREE.MeshStandardMaterial({
-                color: pColor,
-                roughness: 0.15,
-                metalness: 0.8,
-                emissive: pColor,
-                emissiveIntensity: 0.25
-            });
-
-            const mesh = new THREE.Mesh(geom, mat);
+            let meshY = 0;
+            const mesh = window.createArticulatedCharacter(charData.shape, pColor);
             mesh.position.set(pos.x, meshY, pos.z);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -169,7 +146,7 @@ class CrateCrushGame {
 
             this.players.push({
                 id: idx + 1,
-                name: idx === 0 ? "Player 1" : `Opponent ${idx}`,
+                name: idx === 0 ? 'Player 1' : `Opponent ${idx}`,
                 mesh: mesh,
                 shape: charData.shape,
                 color: pColor,
@@ -177,7 +154,7 @@ class CrateCrushGame {
                 health: 100,
                 isAI: idx > 0,
                 isDead: false,
-                facingAngle: idx === 0 ? 0 : Math.PI, 
+                facingAngle: idx === 0 ? 0 : Math.PI,
                 carryingCrate: null,
                 throwCooldown: 0.0,
                 meshY: meshY
@@ -211,7 +188,8 @@ class CrateCrushGame {
         hud.style.display = 'flex';
         hud.style.gap = '25px';
         hud.style.alignItems = 'center';
-        hud.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1)';
+        hud.style.boxShadow =
+            '0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1)';
         hud.style.fontFamily = "'Outfit', sans-serif";
         hud.style.color = '#ffffff';
 
@@ -255,7 +233,7 @@ class CrateCrushGame {
             }
             if (p.isDead && card) {
                 card.style.opacity = '0.25';
-                if (hpText) hpText.textContent = "KO";
+                if (hpText) hpText.textContent = 'KO';
             }
         });
     }
@@ -264,25 +242,27 @@ class CrateCrushGame {
         // Grid size 20 (bounds: -9 to 9)
         let rx, rz, duplicate;
         let attempts = 0;
-        
+
         do {
             rx = Math.floor((Math.random() - 0.5) * 18);
             rz = Math.floor((Math.random() - 0.5) * 18);
             duplicate = false;
-            
+
             // Check if crate already exists nearby
             for (const c of this.crates) {
-                const dist = Math.sqrt((c.mesh.position.x - rx) ** 2 + (c.mesh.position.z - rz) ** 2);
+                const dist = Math.sqrt(
+                    (c.mesh.position.x - rx) ** 2 + (c.mesh.position.z - rz) ** 2
+                );
                 if (dist < 1.8) duplicate = true;
             }
             attempts++;
         } while (duplicate && attempts < 10);
 
         const type = forceType || (Math.random() < 0.25 ? 'tnt' : 'wood');
-        
+
         // Create Cube mesh representation of crate
         const crateGeo = new THREE.BoxGeometry(1.0, 1.0, 1.0);
-        
+
         let crateMat;
         if (type === 'tnt') {
             crateMat = new THREE.MeshStandardMaterial({
@@ -354,8 +334,8 @@ class CrateCrushGame {
         crate.carryPlayer = null;
 
         player.carryingCrate = null;
-        
-        this.showNotification("CRATE LAUNCHED!", player.hex);
+
+        this.showNotification('CRATE LAUNCHED!', player.hex);
     }
 
     triggerExplosion(x, z) {
@@ -441,7 +421,8 @@ class CrateCrushGame {
                 // Spin warning rings
                 if (c.indicator) {
                     c.indicator.rotation.z += 1.2 * dt;
-                    c.indicator.material.opacity = 0.35 + Math.sin(window.engine.clock.getElapsedTime() * 12.0) * 0.2;
+                    c.indicator.material.opacity =
+                        0.35 + Math.sin(window.engine.clock.getElapsedTime() * 12.0) * 0.2;
                 }
 
                 // Check landing
@@ -451,7 +432,13 @@ class CrateCrushGame {
                     c.vy = 0;
 
                     this.cleanupIndicator(c);
-                    this.spawnWoodShatterParticles(c.mesh.position.x, 0.1, c.mesh.position.z, c.type === 'tnt' ? 0xcc1111 : 0x8b5a2b, 8);
+                    this.spawnWoodShatterParticles(
+                        c.mesh.position.x,
+                        0.1,
+                        c.mesh.position.z,
+                        c.type === 'tnt' ? 0xcc1111 : 0x8b5a2b,
+                        8
+                    );
 
                     if (c.type === 'tnt') {
                         this.triggerExplosion(c.mesh.position.x, c.mesh.position.z);
@@ -478,13 +465,18 @@ class CrateCrushGame {
                     } else {
                         crushed.health = Math.max(0, crushed.health - 25);
                         this.flashPlayerColor(crushed);
-                        this.spawnWoodShatterParticles(c.mesh.position.x, c.mesh.position.y, c.mesh.position.z, 0x8b5a2b, 15);
+                        this.spawnWoodShatterParticles(
+                            c.mesh.position.x,
+                            c.mesh.position.y,
+                            c.mesh.position.z,
+                            0x8b5a2b,
+                            15
+                        );
                     }
                     this.removeCrateAt(i);
                     continue;
                 }
-            } 
-            else if (c.state === 'lifted') {
+            } else if (c.state === 'lifted') {
                 const p = c.carryPlayer;
                 if (p.isDead) {
                     c.state = 'falling';
@@ -492,16 +484,19 @@ class CrateCrushGame {
                     p.carryingCrate = null;
                     c.carryPlayer = null;
                 } else {
-                    c.mesh.position.set(p.mesh.position.x, p.mesh.position.y + 1.25, p.mesh.position.z);
+                    c.mesh.position.set(
+                        p.mesh.position.x,
+                        p.mesh.position.y + 1.25,
+                        p.mesh.position.z
+                    );
                     c.mesh.rotation.copy(p.mesh.rotation);
                 }
-            } 
-            else if (c.state === 'thrown') {
+            } else if (c.state === 'thrown') {
                 c.mesh.position.x += c.vx * dt;
                 c.mesh.position.z += c.vz * dt;
                 c.vy -= 9.8 * dt; // gravity
                 c.mesh.position.y += c.vy * dt;
-                
+
                 c.mesh.rotation.x += 3.2 * dt;
                 c.mesh.rotation.y += 2.0 * dt;
 
@@ -510,7 +505,13 @@ class CrateCrushGame {
                     if (c.type === 'tnt') {
                         this.triggerExplosion(c.mesh.position.x, c.mesh.position.z);
                     } else {
-                        this.spawnWoodShatterParticles(c.mesh.position.x, 0.1, c.mesh.position.z, 0x8b5a2b, 12);
+                        this.spawnWoodShatterParticles(
+                            c.mesh.position.x,
+                            0.1,
+                            c.mesh.position.z,
+                            0x8b5a2b,
+                            12
+                        );
                     }
                     this.removeCrateAt(i);
                     continue;
@@ -534,7 +535,13 @@ class CrateCrushGame {
                     } else {
                         hitTarget.health = Math.max(0, hitTarget.health - 20);
                         this.flashPlayerColor(hitTarget);
-                        this.spawnWoodShatterParticles(c.mesh.position.x, c.mesh.position.y, c.mesh.position.z, 0x8b5a2b, 15);
+                        this.spawnWoodShatterParticles(
+                            c.mesh.position.x,
+                            c.mesh.position.y,
+                            c.mesh.position.z,
+                            0x8b5a2b,
+                            15
+                        );
                     }
                     this.removeCrateAt(i);
                     continue;
@@ -542,11 +549,20 @@ class CrateCrushGame {
 
                 // Arena bounds checks
                 const boundLimit = this.arenaSize / 2 + 1.0;
-                if (Math.abs(c.mesh.position.x) > boundLimit || Math.abs(c.mesh.position.z) > boundLimit) {
+                if (
+                    Math.abs(c.mesh.position.x) > boundLimit ||
+                    Math.abs(c.mesh.position.z) > boundLimit
+                ) {
                     if (c.type === 'tnt') {
                         this.triggerExplosion(c.mesh.position.x, c.mesh.position.z);
                     } else {
-                        this.spawnWoodShatterParticles(c.mesh.position.x, c.mesh.position.y, c.mesh.position.z, 0x8b5a2b, 8);
+                        this.spawnWoodShatterParticles(
+                            c.mesh.position.x,
+                            c.mesh.position.y,
+                            c.mesh.position.z,
+                            0x8b5a2b,
+                            8
+                        );
                     }
                     this.removeCrateAt(i);
                     continue;
@@ -737,7 +753,9 @@ class CrateCrushGame {
 
             this.particles.push({
                 mesh,
-                vx, vy, vz,
+                vx,
+                vy,
+                vz,
                 life: 1.0,
                 decay: 1.6 + Math.random() * 1.5
             });
@@ -765,7 +783,9 @@ class CrateCrushGame {
 
             this.particles.push({
                 mesh,
-                vx, vy, vz,
+                vx,
+                vy,
+                vz,
                 life: 1.0,
                 decay: 1.4 + Math.random() * 1.0
             });
@@ -789,7 +809,7 @@ class CrateCrushGame {
 
     triggerGameOver(isVictory) {
         this.gameOver = true;
-        
+
         const existing = document.getElementById('game-over-overlay');
         if (existing) existing.remove();
 
@@ -936,6 +956,21 @@ class CrateCrushGame {
 
         // 7. Check player health and statuses
         this.players.forEach(p => {
+            if (!p.isDead) {
+                if (p.lastPosition) {
+                    const dist = p.mesh.position.distanceTo(p.lastPosition);
+                    const speed = dist / dt;
+                    if (window.animateArticulatedCharacter) {
+                        window.animateArticulatedCharacter(
+                            p.mesh,
+                            speed,
+                            window.engine.clock.getElapsedTime()
+                        );
+                    }
+                }
+                if (!p.lastPosition) p.lastPosition = new THREE.Vector3();
+                p.lastPosition.copy(p.mesh.position);
+            }
             if (!p.isDead && p.health <= 0) {
                 p.isDead = true;
                 this.spawnExplosionParticles(p.mesh.position.x, p.mesh.position.z, p.color, 15);
@@ -977,13 +1012,13 @@ class CrateCrushGame {
         notif.style.backdropFilter = 'blur(10px)';
         notif.style.webkitBackdropFilter = 'blur(10px)';
         notif.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        
+
         document.body.appendChild(notif);
         notif.offsetHeight; // force reflow
-        
+
         notif.style.opacity = '1';
         notif.style.transform = 'translateX(-50%) scale(1.0)';
-        
+
         setTimeout(() => {
             notif.style.opacity = '0';
             notif.style.transform = 'translateX(-50%) scale(0.8) translateY(-25px)';
@@ -998,7 +1033,7 @@ class CrateCrushGame {
     destroy() {
         if (this.arenaGroup) {
             window.engine.scene.remove(this.arenaGroup);
-            this.arenaGroup.traverse((object) => {
+            this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
                     if (Array.isArray(object.material)) {

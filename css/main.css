@@ -985,48 +985,140 @@ h1 {
     text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
 }
 
-.cycle-controls {
+.vertical-cycle-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 5px;
     width: 100%;
+    gap: 8px;
+    margin-top: 5px;
 }
 
-.cycle-btn {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #ffffff;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    cursor: pointer;
+.char-list-vertical {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    border-radius: 14px;
+    background: rgba(15, 18, 30, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0,0,0,0.25);
+}
+
+.char-list-vertical canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.char-items-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.char-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
+    justify-content: flex-end; /* align text to the right, leaving the left for the 3D model */
+    padding-right: 12px;
+    height: 48px;
+    border-radius: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #5d6b82;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Character Specific Variable Tokens (Static Colors) */
+.char-item.char-titan {
+    --char-color: #ff3333;
+}
+.char-item.char-drake {
+    --char-color: #39ff14;
+}
+.char-item.char-mech {
+    --char-color: #00f0ff;
+}
+.char-item.char-rogue {
+    --char-color: #b026ff;
+}
+
+/* Clickable hover states ONLY for human player 1 */
+#slot-card-p1 .char-item:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+}
+
+/* Selected highlights */
+.char-item.char-titan.selected {
+    background: rgba(255, 51, 51, 0.1);
+    border-color: rgba(255, 51, 51, 0.25);
+    color: #ff3333;
+    box-shadow: 0 0 10px rgba(255, 51, 51, 0.15), inset 0 0 4px rgba(255, 51, 51, 0.15);
+}
+.char-item.char-drake.selected {
+    background: rgba(57, 255, 20, 0.1);
+    border-color: rgba(57, 255, 20, 0.25);
+    color: #39ff14;
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.15), inset 0 0 4px rgba(57, 255, 20, 0.15);
+}
+.char-item.char-mech.selected {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: rgba(0, 240, 255, 0.25);
+    color: #00f0ff;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.15), inset 0 0 4px rgba(0, 240, 255, 0.15);
+}
+.char-item.char-rogue.selected {
+    background: rgba(176, 38, 255, 0.1);
+    border-color: rgba(176, 38, 255, 0.25);
+    color: #b026ff;
+    box-shadow: 0 0 10px rgba(176, 38, 255, 0.15), inset 0 0 4px rgba(176, 38, 255, 0.15);
+}
+
+.vertical-cycle-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #a0aec0;
+    width: 100%;
+    padding: 4px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.65rem;
     transition: all 0.2s ease;
     outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.cycle-btn:hover {
+.vertical-cycle-btn:hover {
     background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
     border-color: rgba(255, 255, 255, 0.2);
-    transform: scale(1.08);
 }
 
-.cycle-btn:active {
-    transform: scale(0.92);
-}
-
-#char-preview-canvas-container {
-    width: 100%;
-    height: 220px;
-    margin: 10px 0;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    border-radius: 16px;
-    background: radial-gradient(circle at center, rgba(15, 20, 35, 0.4) 0%, transparent 70%);
+.vertical-cycle-btn:active {
+    transform: scale(0.96);
 }
 
 /* Hide elements on tiny mobile screens, keeping canvas clean */

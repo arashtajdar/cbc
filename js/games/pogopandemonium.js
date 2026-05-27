@@ -1,7 +1,7 @@
 /**
  * POGO PANDEMONIUM gameplay logic
  * Standalone Three.js minigame class for "Pogo Pandemonium".
- * 
+ *
  * Features:
  * - 10x10 grid of tile meshes, starting neutral grey.
  * - Compound pogo stick player meshes that bounce rhythmically.
@@ -26,13 +26,13 @@ class PogoPandemoniumGame {
         // Grid configurations
         this.gridSize = 10;
         this.tileSpacing = 1.3;
-        this.gridOffset = (this.gridSize - 1) * this.tileSpacing / 2; // 5.85
+        this.gridOffset = ((this.gridSize - 1) * this.tileSpacing) / 2; // 5.85
 
         // Groups & Pools
         this.arenaGroup = null;
-        this.tiles = [];      // 2D Array of tile data
-        this.players = [];    // 4 Players
-        this.items = [];      // Spawned items
+        this.tiles = []; // 2D Array of tile data
+        this.players = []; // 4 Players
+        this.items = []; // Spawned items
         this.particles = [];
 
         this.itemSpawnTimer = 0;
@@ -47,7 +47,7 @@ class PogoPandemoniumGame {
     setup() {
         const engine = window.engine;
         if (!engine) {
-            console.error("PogoPandemonium: engine.js not found in global context!");
+            console.error('PogoPandemonium: engine.js not found in global context!');
             return;
         }
 
@@ -82,7 +82,7 @@ class PogoPandemoniumGame {
 
     createGrid() {
         const tileGeo = new THREE.BoxGeometry(1.15, 0.15, 1.15);
-        
+
         for (let r = 0; r < this.gridSize; r++) {
             this.tiles[r] = [];
             for (let c = 0; c < this.gridSize; c++) {
@@ -92,7 +92,7 @@ class PogoPandemoniumGame {
                     metalness: 0.2
                 });
                 const mesh = new THREE.Mesh(tileGeo, tileMat);
-                
+
                 // Position tile in grid space
                 const x = c * this.tileSpacing - this.gridOffset;
                 const z = r * this.tileSpacing - this.gridOffset;
@@ -123,7 +123,7 @@ class PogoPandemoniumGame {
             { r: 1, c: 1 }, // P1
             { r: 1, c: 8 }, // P2
             { r: 8, c: 1 }, // P3
-            { r: 8, c: 8 }  // P4
+            { r: 8, c: 8 } // P4
         ];
 
         const playerKeys = ['p1', 'p2', 'p3', 'p4'];
@@ -133,31 +133,16 @@ class PogoPandemoniumGame {
             const charData = chars[charIdx];
             const start = startCoords[idx];
 
-            const isP1 = (idx === 0);
+            const isP1 = idx === 0;
             const pColor = isP1 ? this.playerColor : charData.color;
-
-            // Define character unique geometry
-            let geom;
-            if (charData.shape === 'cube') {
-                geom = new THREE.BoxGeometry(0.7, 0.7, 0.7);
-            } else if (charData.shape === 'sphere') {
-                geom = new THREE.SphereGeometry(0.4, 32, 32);
-            } else if (charData.shape === 'cylinder') {
-                geom = new THREE.CylinderGeometry(0.3, 0.3, 0.75, 32);
-            } else if (charData.shape === 'cone') {
-                geom = new THREE.ConeGeometry(0.35, 0.8, 32);
-            }
-
-            const mat = new THREE.MeshStandardMaterial({
-                color: pColor,
-                roughness: 0.15,
-                metalness: 0.8,
-                emissive: pColor,
-                emissiveIntensity: 0.2
-            });
 
             // Assemble Compound Pogo Stick Character Group
             const pogoGroup = new THREE.Group();
+
+            const bodyMesh = window.createArticulatedCharacter(charData.shape, pColor);
+            bodyMesh.position.y = 0.9;
+            bodyMesh.scale.set(0.65, 0.65, 0.65); // Make it fit the pogo stick
+            pogoGroup.add(bodyMesh);
 
             // Pogo shaft
             const shaftGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.65, 8);
@@ -175,12 +160,6 @@ class PogoPandemoniumGame {
             handlebar.castShadow = true;
             pogoGroup.add(handlebar);
 
-            // Character body mesh
-            const bodyMesh = new THREE.Mesh(geom, mat);
-            bodyMesh.position.y = 0.9;
-            bodyMesh.castShadow = true;
-            pogoGroup.add(bodyMesh);
-
             // Glowing light on player body
             const light = new THREE.PointLight(pColor, 2.0, 5);
             light.position.y = 0.9;
@@ -195,8 +174,9 @@ class PogoPandemoniumGame {
 
             this.players.push({
                 id: idx + 1,
-                name: idx === 0 ? "Player 1" : `Opponent ${idx}`,
+                name: idx === 0 ? 'Player 1' : `Opponent ${idx}`,
                 mesh: pogoGroup,
+                bodyMesh: bodyMesh,
                 color: pColor,
                 hex: isP1 ? '#' + pColor.toString(16).padStart(6, '0') : charData.hex,
                 isAI: idx > 0,
@@ -275,11 +255,12 @@ class PogoPandemoniumGame {
         // Update layouts in standard instructions hud
         const instructionsText = document.querySelector('.instruction-text');
         if (instructionsText) {
-            instructionsText.textContent = "WASD/Arrows to Hop. Paint the floor tiles with your color. Pick up Stars to claim a 3x3 territory burst. Avoid Spikes that stun you!";
+            instructionsText.textContent =
+                'WASD/Arrows to Hop. Paint the floor tiles with your color. Pick up Stars to claim a 3x3 territory burst. Avoid Spikes that stun you!';
         }
         const instructionTag = document.querySelector('.instruction-tag');
         if (instructionTag) {
-            instructionTag.textContent = "Pogo Pandemonium";
+            instructionTag.textContent = 'Pogo Pandemonium';
         }
     }
 
@@ -305,7 +286,7 @@ class PogoPandemoniumGame {
         const timerEl = document.getElementById('pogo-timer-val');
         if (timerEl) {
             const val = Math.max(0, this.matchTimer);
-            timerEl.textContent = val.toFixed(1) + "s";
+            timerEl.textContent = val.toFixed(1) + 's';
             if (val <= 10.0) {
                 timerEl.style.color = '#ff007f';
                 timerEl.style.textShadow = '0 0 8px rgba(255,0,127,0.6)';
@@ -330,7 +311,7 @@ class PogoPandemoniumGame {
         if (tile.item) return; // grid full
 
         const type = forceType || (Math.random() < 0.5 ? 'boost' : 'hazard');
-        
+
         let mesh;
         if (type === 'boost') {
             // Glowing star shape
@@ -419,12 +400,12 @@ class PogoPandemoniumGame {
             const item = tile.item;
             if (item.type === 'boost') {
                 // Score Boost paints a 3x3 grid around landing point
-                this.showNotification("3x3 PAINT BOOST!", player.hex);
+                this.showNotification('3x3 PAINT BOOST!', player.hex);
                 this.triggerPaintBoost(player.id, player.color, player.gridX, player.gridZ);
                 this.removeItem(item);
             } else if (item.type === 'hazard') {
                 // Stun Hazard freezes movement loop
-                this.showNotification("STUNNED!", "#ff003c");
+                this.showNotification('STUNNED!', '#ff003c');
                 player.stunTimer = 2.0; // stun for 2 seconds
                 this.spawnSparks(tile.mesh.position.x, 0.3, tile.mesh.position.z, 0xff003c, 12);
                 this.removeItem(item);
@@ -546,7 +527,9 @@ class PogoPandemoniumGame {
 
             this.particles.push({
                 mesh,
-                vx, vy, vz,
+                vx,
+                vy,
+                vz,
                 life: 1.0,
                 decay: 2.0 + Math.random() * 1.5
             });
@@ -555,7 +538,7 @@ class PogoPandemoniumGame {
 
     updateScores() {
         // Reset scores
-        this.players.forEach(p => p.score = 0);
+        this.players.forEach(p => (p.score = 0));
 
         // Scan board
         for (let r = 0; r < this.gridSize; r++) {
@@ -608,19 +591,21 @@ class PogoPandemoniumGame {
             // Manage stun freezing timer
             if (p.stunTimer > 0) {
                 p.stunTimer -= dt;
-                
+
                 // Shake stun mesh in place
-                p.mesh.position.x = (p.gridX * this.tileSpacing - this.gridOffset) + (Math.random() - 0.5) * 0.08;
-                p.mesh.position.z = (p.gridZ * this.tileSpacing - this.gridOffset) + (Math.random() - 0.5) * 0.08;
+                p.mesh.position.x =
+                    p.gridX * this.tileSpacing - this.gridOffset + (Math.random() - 0.5) * 0.08;
+                p.mesh.position.z =
+                    p.gridZ * this.tileSpacing - this.gridOffset + (Math.random() - 0.5) * 0.08;
                 p.mesh.position.y = 0;
-                
+
                 // Reset bounce timer during stun
                 p.bounceTimer = 0.0;
                 return;
             }
 
             p.bounceTimer += dt;
-            
+
             // Reaching bounce landing
             if (p.bounceTimer >= p.bounceDuration) {
                 p.bounceTimer = 0.0;
@@ -639,7 +624,7 @@ class PogoPandemoniumGame {
                     // Check human player inputs to target next cell
                     let hopC = p.gridX;
                     let hopR = p.gridZ;
-                    
+
                     if (inputs.w || inputs.ArrowUp) hopR--;
                     else if (inputs.s || inputs.ArrowDown) hopR++;
                     else if (inputs.a || inputs.ArrowLeft) hopC--;
@@ -673,6 +658,14 @@ class PogoPandemoniumGame {
                 while (diff < -Math.PI) diff += Math.PI * 2;
                 while (diff > Math.PI) diff -= Math.PI * 2;
                 p.mesh.rotation.y += diff * 0.3; // rotate smoothly
+            }
+            if (window.animateArticulatedCharacter && p.bodyMesh) {
+                const speed = dc !== 0 || dr !== 0 ? 10 : 0;
+                window.animateArticulatedCharacter(
+                    p.bodyMesh,
+                    speed,
+                    window.engine.clock.getElapsedTime()
+                );
             }
         });
 
@@ -728,7 +721,7 @@ class PogoPandemoniumGame {
             }
         });
 
-        const isVictory = (p1Score > highestOpponentScore);
+        const isVictory = p1Score > highestOpponentScore;
 
         // Display results overlay
         const existing = document.getElementById('game-over-overlay');
@@ -843,7 +836,7 @@ class PogoPandemoniumGame {
             p.stunTimer = 0.0;
             p.score = 0;
             p.mesh.scale.set(1.0, 1.0, 1.0);
-            
+
             const x = start.c * this.tileSpacing - this.gridOffset;
             const z = start.r * this.tileSpacing - this.gridOffset;
             p.mesh.position.set(x, 0.0, z);
@@ -884,13 +877,13 @@ class PogoPandemoniumGame {
         notif.style.backdropFilter = 'blur(10px)';
         notif.style.webkitBackdropFilter = 'blur(10px)';
         notif.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        
+
         document.body.appendChild(notif);
         notif.offsetHeight; // force reflow
-        
+
         notif.style.opacity = '1';
         notif.style.transform = 'translateX(-50%) scale(1.0)';
-        
+
         setTimeout(() => {
             notif.style.opacity = '0';
             notif.style.transform = 'translateX(-50%) scale(0.8) translateY(-25px)';
@@ -905,7 +898,7 @@ class PogoPandemoniumGame {
     destroy() {
         if (this.arenaGroup) {
             window.engine.scene.remove(this.arenaGroup);
-            this.arenaGroup.traverse((object) => {
+            this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
                     if (Array.isArray(object.material)) {

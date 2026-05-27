@@ -1,7 +1,7 @@
 /**
  * DRAGON DROP GAMEPLAY LOGIC
  * Implements the DragonDropGame class to run a jewel-collection and shooting game.
- * 
+ *
  * Features:
  * - 1 Human Player Dragon (Box, Cyan) controlled via WASD / Arrows
  * - 3 Concentric Rings for Score Zones (1x, 2x, 3x multipliers)
@@ -26,18 +26,18 @@ class DragonDropGame {
         this.floor = null;
         this.player = null;
         this.target = null;
-        
+
         // Concentric Rings list
         this.rings = [];
-        
+
         // Jewels and Projectiles
-        this.jewels = [];       // on ground
-        this.heldJewel = null;  // currently attached to player
-        this.projectiles = [];  // active shots in mid-air
-        
+        this.jewels = []; // on ground
+        this.heldJewel = null; // currently attached to player
+        this.projectiles = []; // active shots in mid-air
+
         // Particles pool
         this.particles = [];
-        
+
         // Spacebar debounce flag
         this.spacePressedLastFrame = false;
 
@@ -51,7 +51,7 @@ class DragonDropGame {
         if (this.arenaGroup) return;
         const engine = window.engine;
         if (!engine) {
-            console.error("DragonDropGame: engine.js not found in global context!");
+            console.error('DragonDropGame: engine.js not found in global context!');
             return;
         }
 
@@ -95,7 +95,12 @@ class DragonDropGame {
         // 4. Draw 3 concentric rings (circles) expanding from the center of the stage
         // Zone 1 Ring (Cyan, Radius 6)
         const ringGeo1 = new THREE.RingGeometry(5.9, 6.1, 64);
-        const ringMat1 = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+        const ringMat1 = new THREE.MeshBasicMaterial({
+            color: 0x00f0ff,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.7
+        });
         const ring1 = new THREE.Mesh(ringGeo1, ringMat1);
         ring1.rotation.x = Math.PI / 2;
         ring1.position.y = 0.02;
@@ -104,7 +109,12 @@ class DragonDropGame {
 
         // Zone 2 Ring (Purple, Radius 12)
         const ringGeo2 = new THREE.RingGeometry(11.9, 12.1, 64);
-        const ringMat2 = new THREE.MeshBasicMaterial({ color: 0xb026ff, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+        const ringMat2 = new THREE.MeshBasicMaterial({
+            color: 0xb026ff,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.7
+        });
         const ring2 = new THREE.Mesh(ringGeo2, ringMat2);
         ring2.rotation.x = Math.PI / 2;
         ring2.position.y = 0.02;
@@ -113,7 +123,12 @@ class DragonDropGame {
 
         // Zone 3 Ring (Orange, Radius 18)
         const ringGeo3 = new THREE.RingGeometry(17.9, 18.1, 64);
-        const ringMat3 = new THREE.MeshBasicMaterial({ color: 0xffbb00, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+        const ringMat3 = new THREE.MeshBasicMaterial({
+            color: 0xffbb00,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.7
+        });
         const ring3 = new THREE.Mesh(ringGeo3, ringMat3);
         ring3.rotation.x = Math.PI / 2;
         ring3.position.y = 0.02;
@@ -202,7 +217,8 @@ class DragonDropGame {
         hud.style.display = 'flex';
         hud.style.gap = '36px';
         hud.style.alignItems = 'center';
-        hud.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1)';
+        hud.style.boxShadow =
+            '0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1)';
         hud.style.fontFamily = "'Outfit', sans-serif";
         hud.style.color = '#ffffff';
 
@@ -229,11 +245,12 @@ class DragonDropGame {
         // Update layout descriptions in the HTML template
         const instructionsText = document.querySelector('.instruction-text');
         if (instructionsText) {
-            instructionsText.textContent = "Use WASD/Arrows to move the Dragon. Stand in outer concentric rings to increase multiplier (up to 3x)! Collide with jewels to pick them up, and press Spacebar to shoot them towards the moving target.";
+            instructionsText.textContent =
+                'Use WASD/Arrows to move the Dragon. Stand in outer concentric rings to increase multiplier (up to 3x)! Collide with jewels to pick them up, and press Spacebar to shoot them towards the moving target.';
         }
         const instructionTag = document.querySelector('.instruction-tag');
         if (instructionTag) {
-            instructionTag.textContent = "Dragon Drop Game";
+            instructionTag.textContent = 'Dragon Drop Game';
         }
     }
 
@@ -264,16 +281,16 @@ class DragonDropGame {
         notif.style.backdropFilter = 'blur(10px)';
         notif.style.webkitBackdropFilter = 'blur(10px)';
         notif.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        
+
         document.body.appendChild(notif);
-        
+
         // Force reflow
         notif.offsetHeight;
-        
+
         // Fade in
         notif.style.opacity = '1';
         notif.style.transform = 'translateX(-50%) scale(1.0)';
-        
+
         // Fade out and cleanup
         setTimeout(() => {
             notif.style.opacity = '0';
@@ -292,23 +309,23 @@ class DragonDropGame {
     spawnJewel(colorName) {
         // Sphere shape for jewels as requested
         const jewelGeo = new THREE.SphereGeometry(0.5, 32, 32);
-        
+
         let color, value, name, hexString;
         if (colorName === 'pink') {
             color = 0xff007f;
             value = 10;
-            name = "Pink Jewel";
-            hexString = "#ff007f";
+            name = 'Pink Jewel';
+            hexString = '#ff007f';
         } else if (colorName === 'green') {
             color = 0x39ff14;
             value = 10;
-            name = "Green Jewel";
-            hexString = "#39ff14";
+            name = 'Green Jewel';
+            hexString = '#39ff14';
         } else if (colorName === 'blue') {
             color = 0x00f0ff;
             value = 30;
-            name = "Blue Jewel";
-            hexString = "#00f0ff";
+            name = 'Blue Jewel';
+            hexString = '#00f0ff';
         }
 
         const jewelMat = new THREE.MeshStandardMaterial({
@@ -364,7 +381,7 @@ class DragonDropGame {
         // Visual feedback
         const hexColor = proj.color;
         this.createCollisionImpact(proj.mesh.position.x, proj.mesh.position.z, hexColor, 10);
-        this.showNotification("Jewel Launched!", "#" + hexColor.toString(16).padStart(6, '0'));
+        this.showNotification('Jewel Launched!', '#' + hexColor.toString(16).padStart(6, '0'));
 
         // Calculate vector pointing from launch position to target position
         const targetPos = this.target.position.clone();
@@ -381,8 +398,8 @@ class DragonDropGame {
         // Update HUD
         const heldVal = document.getElementById('dd-held-val');
         if (heldVal) {
-            heldVal.textContent = "None";
-            heldVal.style.color = "#718096";
+            heldVal.textContent = 'None';
+            heldVal.style.color = '#718096';
         }
     }
 
@@ -406,7 +423,7 @@ class DragonDropGame {
         if (this.matchTimer >= 45.0 && !this.blueJewelSpawned) {
             this.blueJewelSpawned = true;
             this.spawnJewel('blue');
-            this.showNotification("BLUE JEWEL SPAWNED (30 PTS)!", "#00f0ff");
+            this.showNotification('BLUE JEWEL SPAWNED (30 PTS)!', '#00f0ff');
         }
 
         // End Game at exactly 90 seconds total
@@ -418,11 +435,11 @@ class DragonDropGame {
         const timerVal = document.getElementById('dd-timer-val');
         if (timerVal) {
             const remaining = Math.max(0, 90.0 - this.matchTimer);
-            timerVal.textContent = remaining.toFixed(1) + "s";
+            timerVal.textContent = remaining.toFixed(1) + 's';
             if (remaining <= 10.0) {
-                timerVal.style.color = "#ff0055"; // Red flashing danger warning
+                timerVal.style.color = '#ff0055'; // Red flashing danger warning
             } else {
-                timerVal.style.color = "#ffffff";
+                timerVal.style.color = '#ffffff';
             }
         }
 
@@ -462,7 +479,7 @@ class DragonDropGame {
                 const targetRotation = Math.atan2(-isoZ, isoX);
                 let currentRotation = this.player.rotation.y;
                 let angleDiff = targetRotation - currentRotation;
-                
+
                 // Normalize angle difference to [-PI, PI]
                 while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
                 while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
@@ -480,11 +497,11 @@ class DragonDropGame {
 
                 // Calculate alignment to scale speed (don't move if facing far away from target)
                 const alignment = Math.max(0, Math.cos(angleDiff));
-                
+
                 // Move forward in the CURRENT facing direction
                 const forwardX = Math.cos(this.player.rotation.y);
                 const forwardZ = -Math.sin(this.player.rotation.y);
-                
+
                 const speed = 9.0 * alignment; // Slower speed, scaled by alignment
 
                 this.player.position.x += forwardX * speed * dt;
@@ -497,23 +514,26 @@ class DragonDropGame {
             }
 
             // --- 4. Constantly Track Concentric Score Zone and Multiplier ---
-            const distFromCenter = Math.sqrt(this.player.position.x * this.player.position.x + this.player.position.z * this.player.position.z);
-            
-            let zoneText = "Outside (1x)";
-            let zoneColor = "#718096";
+            const distFromCenter = Math.sqrt(
+                this.player.position.x * this.player.position.x +
+                    this.player.position.z * this.player.position.z
+            );
+
+            let zoneText = 'Outside (1x)';
+            let zoneColor = '#718096';
             this.currentMultiplier = 1;
 
             if (distFromCenter <= 6.0) {
-                zoneText = "Zone 1 (1x)";
-                zoneColor = "#00f0ff";
+                zoneText = 'Zone 1 (1x)';
+                zoneColor = '#00f0ff';
                 this.currentMultiplier = 1;
             } else if (distFromCenter <= 12.0) {
-                zoneText = "Zone 2 (2x)";
-                zoneColor = "#b026ff";
+                zoneText = 'Zone 2 (2x)';
+                zoneColor = '#b026ff';
                 this.currentMultiplier = 2;
             } else if (distFromCenter <= 18.0) {
-                zoneText = "Zone 3 (3x)";
-                zoneColor = "#ffbb00";
+                zoneText = 'Zone 3 (3x)';
+                zoneColor = '#ffbb00';
                 this.currentMultiplier = 3;
             }
 
@@ -556,15 +576,20 @@ class DragonDropGame {
                         this.jewels.splice(i, 1);
 
                         // Collection feedback particles
-                        this.createCollisionImpact(jewel.mesh.position.x, jewel.mesh.position.z, jewel.color, 8);
-                        
+                        this.createCollisionImpact(
+                            jewel.mesh.position.x,
+                            jewel.mesh.position.z,
+                            jewel.color,
+                            8
+                        );
+
                         // Update HUD indicator
                         const heldVal = document.getElementById('dd-held-val');
                         if (heldVal) {
                             heldVal.textContent = jewel.name;
                             heldVal.style.color = jewel.hexString;
                         }
-                        
+
                         break; // only hold 1 jewel
                     }
                 }
@@ -574,7 +599,7 @@ class DragonDropGame {
         // --- 8. Update Projectile Travel and Collisions ---
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const proj = this.projectiles[i];
-            
+
             // Move projectile
             proj.mesh.position.x += proj.vx * dt;
             proj.mesh.position.z += proj.vz * dt;
@@ -586,17 +611,22 @@ class DragonDropGame {
                 // Target HIT!
                 const points = proj.value * this.currentMultiplier;
                 this.score += points;
-                
+
                 // Update score panel
                 const scoreVal = document.getElementById('dd-score-val');
                 if (scoreVal) {
                     scoreVal.textContent = this.score;
                     scoreVal.style.transform = 'scale(1.3)';
-                    setTimeout(() => scoreVal.style.transform = 'scale(1.0)', 150);
+                    setTimeout(() => (scoreVal.style.transform = 'scale(1.0)'), 150);
                 }
 
                 // Explosive particles
-                this.createCollisionImpact(proj.mesh.position.x, proj.mesh.position.z, proj.color, 22);
+                this.createCollisionImpact(
+                    proj.mesh.position.x,
+                    proj.mesh.position.z,
+                    proj.color,
+                    22
+                );
                 this.showNotification(`Target Hit! +${points} pts`, proj.hexString);
 
                 // Clean up projectile Mesh
@@ -611,10 +641,19 @@ class DragonDropGame {
             }
 
             // Check if projectile goes out of bounds (past target or off grid)
-            if (proj.mesh.position.z < -22.0 || Math.abs(proj.mesh.position.x) > 22.0 || Math.abs(proj.mesh.position.z) > 22.0) {
+            if (
+                proj.mesh.position.z < -22.0 ||
+                Math.abs(proj.mesh.position.x) > 22.0 ||
+                Math.abs(proj.mesh.position.z) > 22.0
+            ) {
                 // MISS! Emitter feedback
-                this.createCollisionImpact(proj.mesh.position.x, proj.mesh.position.z, proj.color, 6);
-                this.showNotification("Missed Target!", "#ff0055");
+                this.createCollisionImpact(
+                    proj.mesh.position.x,
+                    proj.mesh.position.z,
+                    proj.color,
+                    6
+                );
+                this.showNotification('Missed Target!', '#ff0055');
 
                 // Clean up projectile Mesh
                 this.arenaGroup.remove(proj.mesh);
@@ -647,13 +686,13 @@ class DragonDropGame {
      */
     triggerGameOver() {
         this.gameOver = true;
-        
+
         const existing = document.getElementById('game-over-overlay');
         if (existing) existing.remove();
-        
+
         const overlay = document.createElement('div');
         overlay.id = 'game-over-overlay';
-        
+
         overlay.style.position = 'absolute';
         overlay.style.top = '0';
         overlay.style.left = '0';
@@ -669,7 +708,7 @@ class DragonDropGame {
         overlay.style.zIndex = '100';
         overlay.style.opacity = '0';
         overlay.style.transition = 'opacity 0.8s ease';
-        
+
         overlay.innerHTML = `
             <div style="text-align: center; padding: 40px; border-radius: 24px; background: rgba(15, 18, 30, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1); max-width: 450px; width: 90%;">
                 <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 3rem; font-weight: 800; letter-spacing: 4px; color: #ff007f; text-shadow: 0 0 30px rgba(255, 0, 127, 0.6); margin: 0 0 10px 0; text-transform: uppercase;">
@@ -686,9 +725,9 @@ class DragonDropGame {
                 </button>
             </div>
         `;
-        
+
         document.body.appendChild(overlay);
-        
+
         const btn = overlay.querySelector('#dd-restart-btn');
         btn.addEventListener('mouseenter', () => {
             btn.style.transform = 'scale(1.05)';
@@ -701,7 +740,7 @@ class DragonDropGame {
         btn.addEventListener('click', () => {
             this.resetGame();
         });
-        
+
         setTimeout(() => {
             overlay.style.opacity = '1';
         }, 50);
@@ -716,7 +755,7 @@ class DragonDropGame {
             overlay.style.opacity = '0';
             setTimeout(() => overlay.remove(), 800);
         }
-        
+
         // Remove projectiles
         for (const proj of this.projectiles) {
             this.removeJewelObject(proj);
@@ -754,11 +793,11 @@ class DragonDropGame {
         // Reset HUD displays
         const scoreVal = document.getElementById('dd-score-val');
         if (scoreVal) scoreVal.textContent = 0;
-        
+
         const heldVal = document.getElementById('dd-held-val');
         if (heldVal) {
-            heldVal.textContent = "None";
-            heldVal.style.color = "#718096";
+            heldVal.textContent = 'None';
+            heldVal.style.color = '#718096';
         }
 
         // Spawn initial jewels
@@ -772,7 +811,7 @@ class DragonDropGame {
     destroy() {
         if (this.arenaGroup) {
             window.engine.scene.remove(this.arenaGroup);
-            this.arenaGroup.traverse((object) => {
+            this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
                     if (Array.isArray(object.material)) {
