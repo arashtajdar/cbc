@@ -857,7 +857,8 @@ class PogoPandemoniumGame {
         const notif = document.createElement('div');
         notif.textContent = text;
         notif.style.position = 'absolute';
-        notif.style.top = '110px';
+        notif.style.bottom = '80px';
+        notif.style.top = 'auto';
         notif.style.left = '50%';
         notif.style.transform = 'translateX(-50%) scale(0.8)';
         notif.style.background = 'rgba(11, 14, 25, 0.85)';

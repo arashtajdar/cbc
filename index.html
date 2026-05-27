@@ -244,22 +244,7 @@
         </div>
         <div class="subtitle">Three.js Isometric Core</div>
         
-        <!-- Game Switcher Selector -->
-        <div class="game-select-container" style="display: flex; flex-direction: column; gap: 6px;">
-            <div style="display: flex; gap: 6px;">
-                <button id="btn-play-deflecto" class="switch-btn">Deflecto</button>
-                <button id="btn-play-tilefall" class="switch-btn">TileFall</button>
-                <button id="btn-play-boxbrawl" class="switch-btn">BoxBrawl</button>
-                <button id="btn-play-slideout" class="switch-btn">SlideOut</button>
-                <button id="btn-play-bounceclaim" class="switch-btn">BounceClaim</button>
-                <button id="btn-play-ricochet" class="switch-btn">Ricochet</button>
-                <button id="btn-play-kineticring" class="switch-btn">KineticRing</button>
-                <button id="btn-play-hexcollapse" class="switch-btn">HexCollapse</button>
-                <button id="btn-play-shrinkzone" class="switch-btn">ShrinkZone</button>
-                <button id="btn-play-sweeper" class="switch-btn">Sweeper</button>
-            </div>
-            <button onclick="window.exitToLauncher()" class="switch-btn" style="background: rgba(255, 0, 127, 0.15); border: 1px solid rgba(255, 0, 127, 0.3); color: #ff007f; margin-top: 4px; border-radius: 12px; width: 100%; font-size: 0.65rem; font-weight: 800; padding: 4px 10px;">◀ Exit to Launcher</button>
-        </div>
+
     </header>
 
     <!-- Instructions HUD -->
@@ -285,6 +270,9 @@
             <span class="stat-val" style="color: #48bb78;">Active</span>
         </div>
     </div>
+
+    <!-- Small Exit Button at Bottom -->
+    <button onclick="window.exitToLauncher()" class="switch-btn hud" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255, 0, 127, 0.15); border: 1px solid rgba(255, 0, 127, 0.3); color: #ff007f; border-radius: 12px; width: 150px; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; z-index: 1000; display: none;">◀ Exit to Launcher</button>
 
     <!-- Keyboard Visualizer Panel HUD -->
     <div class="control-panel hud" style="display: none;">
