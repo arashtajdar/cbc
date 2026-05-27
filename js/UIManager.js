@@ -419,10 +419,12 @@ function launchSelectedMatch() {
     const headerHud = document.querySelector('header.hud');
     const instructionsHud = document.querySelector('.instructions.hud');
     const statsHud = document.querySelector('.stats-panel.hud');
+    const bottomExitBtn = document.getElementById('bottom-exit-btn');
 
     if (headerHud) headerHud.style.display = 'flex';
     if (instructionsHud) instructionsHud.style.display = 'block';
     if (statsHud) statsHud.style.display = 'flex';
+    if (bottomExitBtn) bottomExitBtn.style.display = 'block';
 
     const titleEl = document.getElementById('engine-title');
     const btnDeflecto = document.getElementById('btn-play-deflecto');
@@ -510,33 +512,37 @@ function launchSelectedMatch() {
             instructionTag.textContent = 'Deflecto';
         }
 
-        if (window.BallistixGame) {
+        const startBallistix = () => {
+            if (!window.BallistixGame) {
+                console.warn('BallistixGame not ready yet, retrying in 100ms...');
+                setTimeout(startBallistix, 100);
+                return;
+            }
             window.activeGame = new window.BallistixGame(
                 'canvas-container',
                 p1Char.color,
                 window.launcherState.selectedArena
             );
 
-            // Override active colors on standard paddle items
-            if (window.activeGame.paddle) {
-                window.activeGame.paddle.material.color.setHex(p1Char.color);
-                window.activeGame.paddle.material.emissive.setHex(p1Char.color);
-            }
-            if (window.activeGame.topPaddle) {
-                window.activeGame.topPaddle.material.color.setHex(p2Char.color);
-                window.activeGame.topPaddle.material.emissive.setHex(p2Char.color);
-            }
-            if (window.activeGame.leftPaddle) {
-                window.activeGame.leftPaddle.material.color.setHex(p3Char.color);
-                window.activeGame.leftPaddle.material.emissive.setHex(p3Char.color);
-            }
-            if (window.activeGame.rightPaddle) {
-                window.activeGame.rightPaddle.material.color.setHex(p4Char.color);
-                window.activeGame.rightPaddle.material.emissive.setHex(p4Char.color);
-            }
-        } else {
-            console.error('BallistixGame class not loaded.');
-        }
+            // Override car body color only (first mesh child = the oval car body).
+            // Character sub-meshes use MeshBasicMaterial which has no emissive, so we skip them.
+            const applyColor = (paddleGroup, colorHex) => {
+                if (!paddleGroup) return;
+                paddleGroup.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        child.material.color.setHex(colorHex);
+                        if (child.material.emissive) {
+                            child.material.emissive.setHex(colorHex);
+                        }
+                    }
+                });
+            };
+            applyColor(window.activeGame.paddle, p1Char.color);
+            applyColor(window.activeGame.topPaddle, p2Char.color);
+            applyColor(window.activeGame.leftPaddle, p3Char.color);
+            applyColor(window.activeGame.rightPaddle, p4Char.color);
+        };
+        startBallistix();
     } else if (gameId === 'tilefall') {
         if (titleEl) titleEl.textContent = 'TileFall';
         setActiveButton(btnTileFall);
@@ -803,6 +809,9 @@ function launchSelectedMatch() {
  * Cleanly exits active gameplay and returns to launcher selections
  */
 function exitToLauncher() {
+    const confirmed = window.confirm('Exit to launcher? Your current match will be lost.');
+    if (!confirmed) return;
+
     console.log('Exiting gameplay to launcher selection...');
 
     // Destroy active game
@@ -821,6 +830,10 @@ function exitToLauncher() {
     // Remove game over overlay
     const gameOverOverlay = document.getElementById('game-over-overlay');
     if (gameOverOverlay) gameOverOverlay.remove();
+
+    // Hide exit button manually (it's a .hud element so transitionToState will hide all HUDs)
+    const exitBtn = document.getElementById('bottom-exit-btn');
+    if (exitBtn) exitBtn.style.display = 'none';
 
     // Recreate default octahedron
     window.restoreSceneEnvironment();

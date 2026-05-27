@@ -272,7 +272,7 @@
     </div>
 
     <!-- Small Exit Button at Bottom -->
-    <button onclick="window.exitToLauncher()" class="switch-btn hud" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255, 0, 127, 0.15); border: 1px solid rgba(255, 0, 127, 0.3); color: #ff007f; border-radius: 12px; width: 150px; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; z-index: 1000; display: none;">◀ Exit to Launcher</button>
+    <button id="bottom-exit-btn" onclick="window.exitToLauncher()" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255, 0, 127, 0.15); border: 1px solid rgba(255, 0, 127, 0.3); color: #ff007f; border-radius: 12px; width: 150px; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; z-index: 1000; cursor: pointer; display: none;">&#9664; Exit to Launcher</button>
 
     <!-- Keyboard Visualizer Panel HUD -->
     <div class="control-panel hud" style="display: none;">
@@ -356,58 +356,6 @@
                         element.classList.remove('active-primary');
                     }
                 }
-            }
-        });
-
-        // Attach event listeners to switcher buttons
-        document.getElementById('btn-play-deflecto').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('deflecto');
-            }
-        });
-        document.getElementById('btn-play-tilefall').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('tilefall');
-            }
-        });
-        document.getElementById('btn-play-boxbrawl').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('boxbrawl');
-            }
-        });
-        document.getElementById('btn-play-slideout').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('slideout');
-            }
-        });
-        document.getElementById('btn-play-bounceclaim').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('bounceclaim');
-            }
-        });
-        document.getElementById('btn-play-ricochet').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('ricochet');
-            }
-        });
-        document.getElementById('btn-play-kineticring').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('kineticring');
-            }
-        });
-        document.getElementById('btn-play-hexcollapse').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('hexcollapse');
-            }
-        });
-        document.getElementById('btn-play-shrinkzone').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('shrinkzone');
-            }
-        });
-        document.getElementById('btn-play-sweeper').addEventListener('click', () => {
-            if (typeof window.switchMinigame === 'function') {
-                window.switchMinigame('sweeper');
             }
         });
 

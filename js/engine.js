@@ -120,7 +120,8 @@ function init() {
                 if (parsed.playerAssignments)
                     window.launcherState.playerAssignments = parsed.playerAssignments;
                 if (parsed.currentState && parsed.currentState !== 'SPLASH') {
-                    startingState = parsed.currentState;
+                    // Don't restore to GAMEPLAY directly — game modules may not be ready yet
+                    startingState = parsed.currentState === 'GAMEPLAY' ? 'GAME_SELECT' : parsed.currentState;
                 }
             }
         } catch (e) {

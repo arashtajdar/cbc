@@ -462,8 +462,9 @@ class BallistixGame {
         // --- 2. Human Paddle Movement (Player controls bottom paddle) ---
         if (this.lives.player > 0) {
             let paddleDirection = 0;
-            if (inputs.a || inputs.ArrowLeft) paddleDirection -= 1;
-            if (inputs.d || inputs.ArrowRight) paddleDirection += 1;
+            // Left/Right arrows move left/right. Up arrow = left, Down arrow = right.
+            if (inputs.ArrowLeft || inputs.ArrowUp) paddleDirection -= 1;
+            if (inputs.ArrowRight || inputs.ArrowDown) paddleDirection += 1;
 
             const paddleMovementSpeed = 24.0; // units/sec
             this.paddleX += paddleDirection * paddleMovementSpeed * dt;
@@ -537,35 +538,43 @@ class BallistixGame {
             }
         }
 
-        // Left & Right manual control
-        let sidePaddleDirection = 0;
-        if (inputs.ArrowUp || inputs.w) sidePaddleDirection -= 1;
-        if (inputs.ArrowDown || inputs.s) sidePaddleDirection += 1;
-        const sideMovementSpeed = 24.0;
-
-        // Left AI defends X = -13.5 (now manual)
+        // Left AI defends X = -13.5
         if (this.lives.left > 0) {
-            this.leftPaddleZ += sidePaddleDirection * sideMovementSpeed * dt;
-            this.leftPaddleZ = Math.max(-vertPaddleLimit, Math.min(vertPaddleLimit, this.leftPaddleZ));
+            const ballPos = closestForLeft ? closestForLeft.z : 0;
+            const aiRes = this.updateAIBehavior(
+                'left',
+                dt,
+                ballPos,
+                this.leftPaddleZ,
+                vertPaddleLimit
+            );
+            this.leftPaddleZ = aiRes.newPos;
             if (this.leftPaddle) {
                 this.leftPaddle.position.z = this.leftPaddleZ;
                 this.leftPaddle.rotation.x = THREE.MathUtils.lerp(
                     this.leftPaddle.rotation.x,
-                    sidePaddleDirection * 0.12,
+                    -aiRes.moveDir * 0.12,
                     0.15
                 );
             }
         }
 
-        // Right AI defends X = 13.5 (now manual)
+        // Right AI defends X = 13.5
         if (this.lives.right > 0) {
-            this.rightPaddleZ += sidePaddleDirection * sideMovementSpeed * dt;
-            this.rightPaddleZ = Math.max(-vertPaddleLimit, Math.min(vertPaddleLimit, this.rightPaddleZ));
+            const ballPos = closestForRight ? closestForRight.z : 0;
+            const aiRes = this.updateAIBehavior(
+                'right',
+                dt,
+                ballPos,
+                this.rightPaddleZ,
+                vertPaddleLimit
+            );
+            this.rightPaddleZ = aiRes.newPos;
             if (this.rightPaddle) {
                 this.rightPaddle.position.z = this.rightPaddleZ;
                 this.rightPaddle.rotation.x = THREE.MathUtils.lerp(
                     this.rightPaddle.rotation.x,
-                    sidePaddleDirection * 0.12,
+                    -aiRes.moveDir * 0.12,
                     0.15
                 );
             }
@@ -1223,8 +1232,39 @@ class BallistixGame {
             right: { state: 'normal', timer: 0.0 }
         };
 
-        const paddleGeoH = new THREE.BoxGeometry(this.paddleWidth, 0.8, 1.2);
-        const paddleGeoV = new THREE.BoxGeometry(1.2, 0.8, this.paddleWidth);
+        const carGeoH = new THREE.SphereGeometry(1, 32, 16);
+        carGeoH.scale(1.75, 0.4, 0.6); // Horizontal oval car
+        const carGeoV = new THREE.SphereGeometry(1, 32, 16);
+        carGeoV.scale(0.6, 0.4, 1.75); // Vertical oval car
+
+        const state = window.launcherState;
+        const p1Char = state && state.characters ? state.characters[state.playerAssignments.p1] : {shape: 'blaze', color: 0x00f0ff};
+        const p2Char = state && state.characters ? state.characters[state.playerAssignments.p2] : {shape: 'glitch', color: 0xffbb00};
+        const p3Char = state && state.characters ? state.characters[state.playerAssignments.p3] : {shape: 'wave', color: 0x39ff14};
+        const p4Char = state && state.characters ? state.characters[state.playerAssignments.p4] : {shape: 'shadow', color: 0xb026ff};
+
+        const createPaddle = (carGeo, mat, shape, color, rotY) => {
+            const group = new THREE.Group();
+            const carMesh = new THREE.Mesh(carGeo, mat);
+            carMesh.castShadow = true;
+            carMesh.receiveShadow = true;
+            group.add(carMesh);
+
+            if (window.createArticulatedCharacter) {
+                const char = window.createArticulatedCharacter(shape, color);
+                char.scale.set(0.6, 0.6, 0.6);
+                char.position.y = 0.35; // Sitting on top
+                if (char.userData.legL) char.userData.legL.rotation.x = -Math.PI / 2;
+                if (char.userData.legR) char.userData.legR.rotation.x = -Math.PI / 2;
+                if (char.userData.armL) char.userData.armL.rotation.x = Math.PI / 3;
+                if (char.userData.armR) char.userData.armR.rotation.x = Math.PI / 3;
+                char.rotation.y = rotY;
+                group.add(char);
+                group.userData.char = char;
+            }
+            group.material = mat;
+            return group;
+        };
 
         const playerMat = new THREE.MeshStandardMaterial({
             color: 0x00f0ff,
@@ -1233,10 +1273,8 @@ class BallistixGame {
             emissive: 0x00f0ff,
             emissiveIntensity: 0.35
         });
-        this.paddle = new THREE.Mesh(paddleGeoH, playerMat);
+        this.paddle = createPaddle(carGeoH, playerMat, p1Char.shape, p1Char.color, 0);
         this.paddle.position.set(this.paddleX, 0.4, this.paddleY);
-        this.paddle.castShadow = true;
-        this.paddle.receiveShadow = true;
         this.arenaGroup.add(this.paddle);
 
         const topMat = new THREE.MeshStandardMaterial({
@@ -1246,10 +1284,8 @@ class BallistixGame {
             emissive: 0xffbb00,
             emissiveIntensity: 0.35
         });
-        this.topPaddle = new THREE.Mesh(paddleGeoH, topMat);
+        this.topPaddle = createPaddle(carGeoH, topMat, p2Char.shape, p2Char.color, Math.PI);
         this.topPaddle.position.set(this.topPaddleX, 0.4, -this.paddleY);
-        this.topPaddle.castShadow = true;
-        this.topPaddle.receiveShadow = true;
         this.arenaGroup.add(this.topPaddle);
 
         const leftMat = new THREE.MeshStandardMaterial({
@@ -1259,10 +1295,8 @@ class BallistixGame {
             emissive: 0x39ff14,
             emissiveIntensity: 0.35
         });
-        this.leftPaddle = new THREE.Mesh(paddleGeoV, leftMat);
+        this.leftPaddle = createPaddle(carGeoV, leftMat, p3Char.shape, p3Char.color, Math.PI / 2);
         this.leftPaddle.position.set(-this.paddleXOffset, 0.4, this.leftPaddleZ);
-        this.leftPaddle.castShadow = true;
-        this.leftPaddle.receiveShadow = true;
         this.arenaGroup.add(this.leftPaddle);
 
         const rightMat = new THREE.MeshStandardMaterial({
@@ -1272,10 +1306,8 @@ class BallistixGame {
             emissive: 0xb026ff,
             emissiveIntensity: 0.35
         });
-        this.rightPaddle = new THREE.Mesh(paddleGeoV, rightMat);
+        this.rightPaddle = createPaddle(carGeoV, rightMat, p4Char.shape, p4Char.color, -Math.PI / 2);
         this.rightPaddle.position.set(this.paddleXOffset, 0.4, this.rightPaddleZ);
-        this.rightPaddle.castShadow = true;
-        this.rightPaddle.receiveShadow = true;
         this.arenaGroup.add(this.rightPaddle);
 
         for (const side of ['player', 'top', 'left', 'right']) {
