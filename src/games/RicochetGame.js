@@ -1,6 +1,7 @@
 import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
+import { RicochetGameConfig } from "../config/RicochetGameConfig.js";
 
 /**
  * TANK MAYHEM gameplay logic
@@ -46,8 +47,8 @@ export default class RicochetGame {
             '#S...#...S#',
             '###########'
         ];
-        this.gridSize = 11;
-        this.cellSize = 1.6;
+        this.gridSize = RicochetGameConfig.gameplay.gridSize;
+        this.cellSize = RicochetGameConfig.gameplay.cellSize;
         this.gridOffset = ((this.gridSize - 1) * this.cellSize) / 2; // 8.0
     }
 
@@ -60,8 +61,8 @@ export default class RicochetGame {
 
         // 1. Tactical top-down view looking down at maze
         this.originalCameraPos = engine.camera.position.clone();
-        engine.camera.position.set(0, 19, 13);
-        engine.camera.lookAt(0, -1, 0);
+        engine.camera.position.set(RicochetGameConfig.camera.position.x, RicochetGameConfig.camera.position.y, RicochetGameConfig.camera.position.z);
+        engine.camera.lookAt(RicochetGameConfig.camera.lookAt.x, RicochetGameConfig.camera.lookAt.y, RicochetGameConfig.camera.lookAt.z);
 
         // 2. Coordinate Group aligned to the isometric perspective
         this.arenaGroup = new THREE.Group();
@@ -948,4 +949,4 @@ export default class RicochetGame {
 
 // Expose RicochetGame globally
 
-export default RicochetGame;
+//export default RicochetGame;

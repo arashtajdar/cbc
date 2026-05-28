@@ -1,9 +1,10 @@
 import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
+import { SweeperGameConfig } from "../config/SweeperGameConfig.js";
 
 
-export export default class SweeperGame {
+export default class SweeperGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
@@ -18,12 +19,12 @@ export export default class SweeperGame {
         this.scene.add(this.group);
 
         this.players = [];
-        this.arenaRadius = 18;
+        this.arenaRadius = SweeperGameConfig.gameplay.arenaRadius;
         this.isGameOver = false;
 
-        this.baseAngularVelocity = 1.0;
+        this.baseAngularVelocity = SweeperGameConfig.gameplay.baseAngularVelocity;
         this.angularVelocity = this.baseAngularVelocity;
-        this.matchTime = 0;
+        this.matchTime = SweeperGameConfig.gameplay.matchTime;
 
         // Custom inputs for ducking
         this.customInputs = { duck: false };

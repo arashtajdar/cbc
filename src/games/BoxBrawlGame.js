@@ -2,6 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
 import * as CharacterBuilder from "../components/CharacterBuilder.js";
+import { BoxBrawlConfig } from "../config/BoxBrawlConfig.js";
 
 /**
  * CRATE CRUSH gameplay logic
@@ -23,7 +24,7 @@ export default class BoxBrawlGame {
         this.playerColor = playerColor !== undefined ? playerColor : 0xff3333;
 
         this.gameOver = false;
-        this.arenaSize = 20;
+        this.arenaSize = BoxBrawlConfig.gameplay.arenaSize;
 
         // Groups & Pools
         this.arenaGroup = null;
@@ -34,7 +35,7 @@ export default class BoxBrawlGame {
 
         // Spawning timer
         this.crateSpawnTimer = 0.0;
-        this.crateSpawnInterval = 3.0;
+        this.crateSpawnInterval = BoxBrawlConfig.gameplay.crateSpawnInterval;
 
         this.spacePressedLastFrame = false;
     }

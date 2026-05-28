@@ -1,6 +1,7 @@
 import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
+import { ShrinkZoneGameConfig } from "../config/ShrinkZoneGameConfig.js";
 
 /**
  * DRAGON DROP GAMEPLAY LOGIC
@@ -21,9 +22,9 @@ export default class ShrinkZoneGame {
         this.containerId = containerId;
         this.playerColor = playerColor;
         this.arenaId = arenaId;
-        this.score = 0;
-        this.currentMultiplier = 1;
-        this.matchTimer = 0.0;
+        this.score = ShrinkZoneGameConfig.gameplay.score;
+        this.currentMultiplier = ShrinkZoneGameConfig.gameplay.currentMultiplier;
+        this.matchTimer = ShrinkZoneGameConfig.gameplay.matchTimer;
         this.blueJewelSpawned = false;
         this.gameOver = false;
 

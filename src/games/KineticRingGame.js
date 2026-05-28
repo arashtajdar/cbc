@@ -1,9 +1,10 @@
 import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
+import { KineticRingGameConfig } from "../config/KineticRingGameConfig.js";
 
 
-export export default class KineticRingGame {
+export default class KineticRingGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
@@ -22,7 +23,7 @@ export export default class KineticRingGame {
         this.projectiles = []; // Not used here, but keeping consistent arrays if needed
         this.particles = [];
 
-        this.arenaRadius = 15;
+        this.arenaRadius = KineticRingGameConfig.gameplay.arenaRadius;
         this.isGameOver = false;
 
         // Camera setup

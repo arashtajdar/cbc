@@ -1,9 +1,10 @@
 import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
+import { HexCollapseGameConfig } from "../config/HexCollapseGameConfig.js";
 
 
-export export default class HexCollapseGame {
+export default class HexCollapseGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
@@ -20,13 +21,13 @@ export export default class HexCollapseGame {
         this.players = [];
         this.traps = [];
 
-        this.arenaSize = 30;
+        this.arenaSize = HexCollapseGameConfig.gameplay.arenaSize;
         this.safeZoneSize = this.arenaSize;
-        this.minSafeZoneSize = 2;
-        this.shrinkRate = 0.4; // Units per second
+        this.minSafeZoneSize = HexCollapseGameConfig.gameplay.minSafeZoneSize;
+        this.shrinkRate = HexCollapseGameConfig.gameplay.shrinkRate; // Units per second
 
         this.isGameOver = false;
-        this.trapSpawnTimer = 0;
+        this.trapSpawnTimer = HexCollapseGameConfig.gameplay.trapSpawnTimer;
 
         this.originalCameraPos = this.camera.position.clone();
         this.originalCameraRot = this.camera.rotation.clone();

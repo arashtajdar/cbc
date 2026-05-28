@@ -381,6 +381,12 @@ export function launchSelectedMatch() {
     const gameId = launcherState.selectedGame;
     console.log("Starting match:", gameId);
 
+    const gameDef = minigamesRegistry.find(g => g.id === gameId);
+    if (gameDef) {
+        const titleEl = document.getElementById("engine-title");
+        if (titleEl) titleEl.textContent = gameDef.name;
+    }
+
     const overlays = ["splash-screen", "main-menu-screen", "game-selection-screen", "char-selection-screen", "settings-overlay"];
     overlays.forEach(id => {
         const el = document.getElementById(id);
@@ -446,7 +452,12 @@ export function renderArenaSelectionGrid() {
         const card = document.createElement("div");
         card.className = "game-card";
         card.style.height = "180px";
-        card.innerHTML = "<div class=\"card-content\" style=\"padding: 10px;\"><h3 class=\"card-title\">" + arena + "</h3></div>";
+        card.innerHTML = `
+            <div class="card-icon" style="height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2rem; background: rgba(0,0,0,0.5);">🏟️</div>
+            <div class="card-content" style="padding: 10px;">
+                <h3 class="card-title" style="font-size: 1.1rem; margin: 0;">${arena}</h3>
+            </div>
+        `;
         card.addEventListener("click", () => {
             selectArena(arena);
             document.querySelectorAll("#arena-grid .game-card").forEach(c => c.style.border = "1px solid rgba(255, 255, 255, 0.1)");

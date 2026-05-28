@@ -2,6 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
 import * as CharacterBuilder from "../components/CharacterBuilder.js";
+import { BounceClaimConfig } from "../config/BounceClaimConfig.js";
 
 /**
  * POGO PANDEMONIUM gameplay logic
@@ -25,11 +26,11 @@ export default class BounceClaimGame {
         this.playerColor = playerColor !== undefined ? playerColor : 0xff3333;
 
         this.gameOver = false;
-        this.matchTimer = 60.0; // 60-second limit
+        this.matchTimer = BounceClaimConfig.gameplay.matchTimer; // 60-second limit
 
         // Grid configurations
-        this.gridSize = 10;
-        this.tileSpacing = 1.3;
+        this.gridSize = BounceClaimConfig.gameplay.gridSize;
+        this.tileSpacing = BounceClaimConfig.gameplay.tileSpacing;
         this.gridOffset = ((this.gridSize - 1) * this.tileSpacing) / 2; // 5.85
 
         // Groups & Pools
@@ -40,7 +41,7 @@ export default class BounceClaimGame {
         this.particles = [];
 
         this.itemSpawnTimer = 0;
-        this.itemSpawnInterval = 4.5; // Spawn item every 4.5s
+        this.itemSpawnInterval = BounceClaimConfig.gameplay.itemSpawnInterval; // Spawn item every 4.5s
 
         this.spacePressedLastFrame = false;
         this.originalCameraPos = null;
@@ -55,8 +56,8 @@ export default class BounceClaimGame {
 
         // 1. Position camera at high-angle top-down view showing entire board
         this.originalCameraPos = engine.camera.position.clone();
-        engine.camera.position.set(0, 17, 13);
-        engine.camera.lookAt(0, -1, 0);
+        engine.camera.position.set(BounceClaimConfig.camera.position.x, BounceClaimConfig.camera.position.y, BounceClaimConfig.camera.position.z);
+        engine.camera.lookAt(BounceClaimConfig.camera.lookAt.x, BounceClaimConfig.camera.lookAt.y, BounceClaimConfig.camera.lookAt.z);
 
         // 2. Coordinate Group aligned to the isometric perspective
         this.arenaGroup = new THREE.Group();
@@ -174,28 +175,28 @@ export default class BounceClaimGame {
 
             this.arenaGroup.add(pogoGroup);
 
-                let diffSetting = launcherState?.aiDifficulty || 'normal';
-                let aiBounceDuration = diffSetting === 'easy' ? 0.8 : (diffSetting === 'hard' ? 0.35 : 0.55);
-                
-                // Add the object to the array with dynamically computed bounce duration for AI
-                this.players.push({
-                    id: idx + 1,
-                    name: idx === 0 ? 'Player 1' : `Opponent ${idx}`,
-                    mesh: pogoGroup,
-                    bodyMesh: bodyMesh,
-                    color: pColor,
-                    hex: isP1 ? '#' + pColor.toString(16).padStart(6, '0') : charData.hex,
-                    isAI: idx > 0,
-                    gridX: start.c,
-                    gridZ: start.r,
-                    targetGridX: start.c,
-                    targetGridZ: start.r,
-                    bounceTimer: 0.0,
-                    bounceDuration: (idx > 0) ? aiBounceDuration : 0.55, // Jump cycle duration
-                    stunTimer: 0.0,
-                    score: 0,
-                    facingAngle: idx === 0 ? 0 : Math.PI
-                });
+            let diffSetting = launcherState?.aiDifficulty || 'normal';
+            let aiBounceDuration = diffSetting === 'easy' ? 0.8 : (diffSetting === 'hard' ? 0.35 : 0.55);
+
+            // Add the object to the array with dynamically computed bounce duration for AI
+            this.players.push({
+                id: idx + 1,
+                name: idx === 0 ? 'Player 1' : `Opponent ${idx}`,
+                mesh: pogoGroup,
+                bodyMesh: bodyMesh,
+                color: pColor,
+                hex: isP1 ? '#' + pColor.toString(16).padStart(6, '0') : charData.hex,
+                isAI: idx > 0,
+                gridX: start.c,
+                gridZ: start.r,
+                targetGridX: start.c,
+                targetGridZ: start.r,
+                bounceTimer: 0.0,
+                bounceDuration: (idx > 0) ? aiBounceDuration : 0.55, // Jump cycle duration
+                stunTimer: 0.0,
+                score: 0,
+                facingAngle: idx === 0 ? 0 : Math.PI
+            });
         });
     }
 
@@ -936,4 +937,4 @@ export default class BounceClaimGame {
 
 // Expose BounceClaimGame globally
 
-export default BounceClaimGame;
+//export default BounceClaimGame;

@@ -2,6 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
 import * as CharacterBuilder from "../components/CharacterBuilder.js";
+import { SlideOutGameConfig } from "../config/SlideOutGameConfig.js";
 
 /**
  * POLAR PUSH gameplay logic
@@ -24,7 +25,7 @@ export default class SlideOutGame {
         this.playerColor = playerColor !== undefined ? playerColor : 0xff3333;
 
         this.gameOver = false;
-        this.platformRadius = 12.0;
+        this.platformRadius = SlideOutGameConfig.gameplay.platformRadius;
 
         // Groups & Pools
         this.arenaGroup = null;
@@ -47,8 +48,8 @@ export default class SlideOutGame {
         this.originalCameraPos = engine.camera.position.clone();
 
         // Set dramatic tilted top-down angle looking down at platform
-        engine.camera.position.set(0, 24, 16);
-        engine.camera.lookAt(0, 0, 0);
+        engine.camera.position.set(SlideOutGameConfig.camera.position.x, SlideOutGameConfig.camera.position.y, SlideOutGameConfig.camera.position.z);
+        engine.camera.lookAt(SlideOutGameConfig.camera.lookAt.x, SlideOutGameConfig.camera.lookAt.y, SlideOutGameConfig.camera.lookAt.z);
 
         // 2. Coordinate Group aligned to the isometric perspective
         this.arenaGroup = new THREE.Group();
@@ -663,7 +664,7 @@ export default class SlideOutGame {
 
                     const pDist = Math.sqrt(
                         p.mesh.position.x * p.mesh.position.x +
-                            p.mesh.position.z * p.mesh.position.z
+                        p.mesh.position.z * p.mesh.position.z
                     );
                     if (pDist > maxEdgeDist) {
                         maxEdgeDist = pDist;
@@ -924,4 +925,4 @@ export default class SlideOutGame {
 
 // Expose SlideOutGame globally
 
-export default SlideOutGame;
+//export default SlideOutGame;

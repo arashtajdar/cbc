@@ -2,6 +2,7 @@ import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
 import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
 import * as CharacterBuilder from "../components/CharacterBuilder.js";
+import { DeflectoGameConfig } from "../config/DeflectoGameConfig.js";
 
 /**
  * BALLISTIX GAMEPLAY LOGIC (CHAOS MULTIBALL EDITION)
@@ -25,7 +26,7 @@ export default class DeflectoGame {
         this.containerId = containerId;
         this.playerColor = playerColor;
         this.arenaId = arenaId;
-        this.score = 0;
+        this.score = DeflectoGameConfig.gameplay.score;
         this.lives = {
             player: 15,
             top: 15,
@@ -62,27 +63,27 @@ export default class DeflectoGame {
         this.balls = [];
 
         // Arena layout size
-        this.arenaWidth = 30; // Left-to-Right bounds (local X)
-        this.arenaLength = 40; // Top-to-Bottom bounds (local Z)
-        this.paddleY = 18; // Horiz paddles Z offset (+/- 18)
-        this.paddleXOffset = 13.5; // Vert paddles X offset (+/- 13.5)
+        this.arenaWidth = DeflectoGameConfig.gameplay.arenaWidth; // Left-to-Right bounds (local X)
+        this.arenaLength = DeflectoGameConfig.gameplay.arenaLength; // Top-to-Bottom bounds (local Z)
+        this.paddleY = DeflectoGameConfig.gameplay.paddleY; // Horiz paddles Z offset (+/- 18)
+        this.paddleXOffset = DeflectoGameConfig.gameplay.paddleXOffset; // Vert paddles X offset (+/- 13.5)
 
-        this.paddleWidth = 7.0;
-        this.ballRadius = 0.6;
+        this.paddleWidth = DeflectoGameConfig.gameplay.paddleWidth;
+        this.ballRadius = DeflectoGameConfig.gameplay.ballRadius;
 
         // Positions
-        this.paddleX = 0; // Player X
-        this.topPaddleX = 0; // Top AI X
-        this.leftPaddleZ = 0; // Left AI Z
-        this.rightPaddleZ = 0; // Right AI Z
+        this.paddleX = DeflectoGameConfig.gameplay.paddleX; // Player X
+        this.topPaddleX = DeflectoGameConfig.gameplay.topPaddleX; // Top AI X
+        this.leftPaddleZ = DeflectoGameConfig.gameplay.leftPaddleZ; // Left AI Z
+        this.rightPaddleZ = DeflectoGameConfig.gameplay.rightPaddleZ; // Right AI Z
 
         // Physics constants
-        this.baseBallSpeed = 15.0; // Very first ball starts slow
-        this.lastSpawnedSpeed = 15.0; // Tracks speed of the last spawned ball to escalate by 10%
+        this.baseBallSpeed = DeflectoGameConfig.gameplay.baseBallSpeed; // Very first ball starts slow
+        this.lastSpawnedSpeed = DeflectoGameConfig.gameplay.lastSpawnedSpeed; // Tracks speed of the last spawned ball to escalate by 10%
 
         // Spawning timer (spawns new ball every 10s)
-        this.spawnTimer = 0.0;
-        this.spawnInterval = 10.0;
+        this.spawnTimer = DeflectoGameConfig.gameplay.spawnTimer;
+        this.spawnInterval = DeflectoGameConfig.gameplay.spawnInterval;
 
         // Pillars configuration for round boundary bounces
         this.pillarPositions = [

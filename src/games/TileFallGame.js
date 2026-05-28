@@ -3,7 +3,7 @@ import { SceneManager } from "../core/SceneManager.js";
 import { launcherState } from "../core/LauncherState.js";
 
 
-export export default class TileFallGame {
+export default class TileFallGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
