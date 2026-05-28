@@ -52,6 +52,9 @@ export default class BoxBrawlGame {
         this.arenaGroup.rotation.y = -Math.PI / 4;
         engine.scene.add(this.arenaGroup);
 
+        engine.camera.position.set(22, 22, 22);
+        engine.camera.lookAt(0, -1, 0);
+
         // 2. Floor Slab
         const floorGeo = new THREE.BoxGeometry(this.arenaSize, 0.4, this.arenaSize);
         const floorMat = new THREE.MeshStandardMaterial({
@@ -138,6 +141,8 @@ export default class BoxBrawlGame {
 
             let meshY = 0;
             const mesh = CharacterBuilder.create(charData.shape, pColor);
+            const s = BoxBrawlConfig.gameplay.playerScale;
+            mesh.scale.set(s, s, s);
             mesh.position.set(pos.x, meshY, pos.z);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -261,13 +266,31 @@ export default class BoxBrawlGame {
             attempts++;
         } while (duplicate && attempts < 10);
 
-        const type = forceType || (Math.random() < 0.25 ? 'tnt' : 'wood');
+        const rand = Math.random();
+        let type = forceType;
+        if (!type) {
+            if (rand < 0.15) {
+                type = 'tnt_2x';
+            } else if (rand < 0.35) {
+                type = 'tnt';
+            } else {
+                type = 'wood';
+            }
+        }
 
         // Create Cube mesh representation of crate
         const crateGeo = new THREE.BoxGeometry(1.0, 1.0, 1.0);
 
         let crateMat;
-        if (type === 'tnt') {
+        if (type === 'tnt_2x') {
+            crateMat = new THREE.MeshStandardMaterial({
+                color: 0xff00ff, // Purple for 2x damage
+                roughness: 0.3,
+                metalness: 0.8,
+                emissive: 0xff00ff,
+                emissiveIntensity: 0.5
+            });
+        } else if (type === 'tnt') {
             crateMat = new THREE.MeshStandardMaterial({
                 color: 0xcc1111, // Bright warning red
                 roughness: 0.4,
@@ -284,39 +307,26 @@ export default class BoxBrawlGame {
         }
 
         const mesh = new THREE.Mesh(crateGeo, crateMat);
-        mesh.position.set(rx, 15.0, rz); // drops from height Y = 15
+        mesh.position.set(rx, 0.6, rz); // spawn directly on the ground
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         this.arenaGroup.add(mesh);
 
         // Add MENACING point light for TNT
-        if (type === 'tnt') {
-            const light = new THREE.PointLight(0xff3300, 2.0, 4);
+        if (type === 'tnt' || type === 'tnt_2x') {
+            const light = new THREE.PointLight(type === 'tnt_2x' ? 0xff00ff : 0xff3300, 2.0, 4);
             mesh.add(light);
         }
-
-        // Ground Warning Indicator Ring
-        const indGeo = new THREE.RingGeometry(0.85, 1.0, 32);
-        const indMat = new THREE.MeshBasicMaterial({
-            color: type === 'tnt' ? 0xff0000 : 0x8b5a2b,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.6
-        });
-        const indicator = new THREE.Mesh(indGeo, indMat);
-        indicator.rotation.x = Math.PI / 2;
-        indicator.position.set(rx, 0.02, rz);
-        this.arenaGroup.add(indicator);
 
         this.crates.push({
             mesh,
             type,
-            state: 'falling',
+            state: 'ground',
             carryPlayer: null,
             vx: 0,
-            vy: -7.0, // downward falling speed
+            vy: 0,
             vz: 0,
-            indicator,
+            indicator: null,
             throwerId: null
         });
     }
@@ -326,7 +336,7 @@ export default class BoxBrawlGame {
         if (!crate) return;
 
         const angle = player.facingAngle;
-        const throwSpeed = 15.5;
+        const throwSpeed = BoxBrawlConfig.gameplay.throwSpeed;
 
         // Propel forward relative to facing direction
         crate.vx = Math.cos(angle) * throwSpeed;
@@ -341,11 +351,11 @@ export default class BoxBrawlGame {
         this.showNotification('CRATE LAUNCHED!', player.hex);
     }
 
-    triggerExplosion(x, z) {
+    triggerExplosion(x, z, is2x = false) {
         // 1. Exploding visual sphere
-        const expGeo = new THREE.SphereGeometry(1.2, 16, 16);
+        const expGeo = new THREE.SphereGeometry(is2x ? 1.8 : 1.2, 16, 16);
         const expMat = new THREE.MeshBasicMaterial({
-            color: 0xff3b00,
+            color: is2x ? 0xff00ff : 0xff3b00,
             transparent: true,
             opacity: 0.85
         });
@@ -353,7 +363,7 @@ export default class BoxBrawlGame {
         expMesh.position.set(x, 0.6, z);
         this.arenaGroup.add(expMesh);
 
-        const expLight = new THREE.PointLight(0xff3b00, 8.0, 12);
+        const expLight = new THREE.PointLight(is2x ? 0xff00ff : 0xff3b00, 8.0, 12);
         expMesh.add(expLight);
 
         this.explosions.push({
@@ -364,10 +374,10 @@ export default class BoxBrawlGame {
         });
 
         // Fire particle burst
-        this.spawnExplosionParticles(x, z, 0xff5500, 24);
+        this.spawnExplosionParticles(x, z, is2x ? 0xff00ff : 0xff5500, 24);
 
         // 2. Deal AoE damage and knockback force to players
-        const maxRadius = 5.0;
+        const maxRadius = is2x ? 7.0 : 5.0;
         this.players.forEach(p => {
             if (p.isDead) return;
 
@@ -379,12 +389,13 @@ export default class BoxBrawlGame {
 
             if (dist < maxRadius) {
                 // AoE damage formula: scaling linearly down from epicenter (50 max)
-                const dmg = 50 * (1.0 - dist / maxRadius);
+                const baseDmg = is2x ? 100 : 50;
+                const dmg = baseDmg * (1.0 - dist / maxRadius);
                 p.health = Math.max(0, p.health - dmg);
 
                 // Knockback vectors (pushes players away from detonation point)
                 if (dist > 0.1) {
-                    const force = 4.2 * (1.0 - dist / maxRadius);
+                    const force = (is2x ? 6.2 : 4.2) * (1.0 - dist / maxRadius);
                     p.mesh.position.x += (dx / dist) * force;
                     p.mesh.position.z += (dz / dist) * force;
 
@@ -439,12 +450,12 @@ export default class BoxBrawlGame {
                         c.mesh.position.x,
                         0.1,
                         c.mesh.position.z,
-                        c.type === 'tnt' ? 0xcc1111 : 0x8b5a2b,
+                        c.type === 'tnt_2x' ? 0xff00ff : (c.type === 'tnt' ? 0xcc1111 : 0x8b5a2b),
                         8
                     );
 
-                    if (c.type === 'tnt') {
-                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z);
+                    if (c.type === 'tnt' || c.type === 'tnt_2x') {
+                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z, c.type === 'tnt_2x');
                         this.removeCrateAt(i);
                         continue;
                     }
@@ -463,8 +474,8 @@ export default class BoxBrawlGame {
                 if (crushed) {
                     this.cleanupIndicator(c);
 
-                    if (c.type === 'tnt') {
-                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z);
+                    if (c.type === 'tnt' || c.type === 'tnt_2x') {
+                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z, c.type === 'tnt_2x');
                     } else {
                         crushed.health = Math.max(0, crushed.health - 25);
                         this.flashPlayerColor(crushed);
@@ -505,8 +516,8 @@ export default class BoxBrawlGame {
 
                 // Floor boundary collision
                 if (c.mesh.position.y <= 0.6) {
-                    if (c.type === 'tnt') {
-                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z);
+                    if (c.type === 'tnt' || c.type === 'tnt_2x') {
+                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z, c.type === 'tnt_2x');
                     } else {
                         this.spawnWoodShatterParticles(
                             c.mesh.position.x,
@@ -533,8 +544,8 @@ export default class BoxBrawlGame {
                 });
 
                 if (hitTarget) {
-                    if (c.type === 'tnt') {
-                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z);
+                    if (c.type === 'tnt' || c.type === 'tnt_2x') {
+                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z, c.type === 'tnt_2x');
                     } else {
                         hitTarget.health = Math.max(0, hitTarget.health - 20);
                         this.flashPlayerColor(hitTarget);
@@ -556,8 +567,8 @@ export default class BoxBrawlGame {
                     Math.abs(c.mesh.position.x) > boundLimit ||
                     Math.abs(c.mesh.position.z) > boundLimit
                 ) {
-                    if (c.type === 'tnt') {
-                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z);
+                    if (c.type === 'tnt' || c.type === 'tnt_2x') {
+                        this.triggerExplosion(c.mesh.position.x, c.mesh.position.z, c.type === 'tnt_2x');
                     } else {
                         this.spawnWoodShatterParticles(
                             c.mesh.position.x,
@@ -605,7 +616,7 @@ export default class BoxBrawlGame {
             let speedMult = diffSetting === 'easy' ? 0.7 : (diffSetting === 'hard' ? 1.3 : 1.0);
             
             // Speed reduction while carrying
-            const speed = (ai.carryingCrate ? 6.3 : 9.0) * speedMult;
+            const speed = (ai.carryingCrate ? BoxBrawlConfig.gameplay.carryingSpeed : BoxBrawlConfig.gameplay.baseSpeed) * speedMult;
 
             if (!ai.carryingCrate) {
                 // Find closest grounded crate
@@ -613,7 +624,7 @@ export default class BoxBrawlGame {
                 let minDist = Infinity;
 
                 this.crates.forEach(c => {
-                    if (c.state === 'ground' || c.state === 'falling') {
+                    if (c.state === 'ground') {
                         const dist = ai.mesh.position.distanceTo(c.mesh.position);
                         if (dist < minDist) {
                             minDist = dist;
@@ -899,7 +910,7 @@ export default class BoxBrawlGame {
             if (inputs.a || inputs.ArrowLeft) moveX -= 1;
             if (inputs.d || inputs.ArrowRight) moveX += 1;
 
-            const speed = p1.carryingCrate ? 6.3 : 9.0;
+            const speed = p1.carryingCrate ? BoxBrawlConfig.gameplay.carryingSpeed : BoxBrawlConfig.gameplay.baseSpeed;
 
             if (moveX !== 0 || moveZ !== 0) {
                 const len = Math.sqrt(moveX * moveX + moveZ * moveZ);
@@ -920,14 +931,17 @@ export default class BoxBrawlGame {
                 p1.mesh.position.z = Math.max(-boundary, Math.min(boundary, p1.mesh.position.z));
             }
 
-            // Human player action key binding Space
+            // Human player action key bindings
+            const eTrigger = inputs.e && !this.ePressedLastFrame;
+            this.ePressedLastFrame = inputs.e;
+
             const spaceTrigger = inputs.Space && !this.spacePressedLastFrame;
             this.spacePressedLastFrame = inputs.Space;
 
-            if (spaceTrigger) {
+            if (eTrigger) {
                 if (!p1.carryingCrate) {
                     let nearest = null;
-                    let minDist = 1.3;
+                    let minDist = 2.5; // Increased pickup range since character is 3x larger
                     this.crates.forEach(c => {
                         if (c.state === 'ground') {
                             const d = p1.mesh.position.distanceTo(c.mesh.position);
@@ -944,7 +958,11 @@ export default class BoxBrawlGame {
                         nearest.carryPlayer = p1;
                         p1.carryingCrate = nearest;
                     }
-                } else {
+                }
+            }
+
+            if (spaceTrigger) {
+                if (p1.carryingCrate) {
                     this.throwCrate(p1);
                 }
             }

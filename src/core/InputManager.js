@@ -7,7 +7,8 @@ export const inputs = {
     ArrowDown: false,
     ArrowLeft: false,
     ArrowRight: false,
-    Space: false
+    Space: false,
+    e: false
 };
 
 export function setupInputHandling() {
@@ -22,6 +23,9 @@ export function setupInputHandling() {
         KeyA: 'a',
         a: 'a',
         A: 'a',
+        KeyE: 'e',
+        e: 'e',
+        E: 'e',
         KeyS: 's',
         s: 's',
         S: 's',
