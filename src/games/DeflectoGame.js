@@ -176,10 +176,10 @@ export default class DeflectoGame {
         carGeoV.scale(2.5, 0.8, 3.5); // Curvier, double-size vertical oval
 
         const state = launcherState;
-        const p1Char = state && state.characters ? state.characters[state.playerAssignments.p1] : {shape: 'blaze', color: 0x00f0ff};
-        const p2Char = state && state.characters ? state.characters[state.playerAssignments.p2] : {shape: 'glitch', color: 0xffbb00};
-        const p3Char = state && state.characters ? state.characters[state.playerAssignments.p3] : {shape: 'wave', color: 0x39ff14};
-        const p4Char = state && state.characters ? state.characters[state.playerAssignments.p4] : {shape: 'shadow', color: 0xb026ff};
+        const p1Char = state && state.characters ? state.characters[state.playerAssignments.p1] : {shape: 'bumpo', color: 0x00f0ff};
+        const p2Char = state && state.characters ? state.characters[state.playerAssignments.p2] : {shape: 'zippy', color: 0xffbb00};
+        const p3Char = state && state.characters ? state.characters[state.playerAssignments.p3] : {shape: 'puddle', color: 0x39ff14};
+        const p4Char = state && state.characters ? state.characters[state.playerAssignments.p4] : {shape: 'sly', color: 0xb026ff};
 
         const createPaddle = (carGeo, mat, shape, color, rotY) => {
             const group = new THREE.Group();
@@ -1248,10 +1248,10 @@ export default class DeflectoGame {
         carGeoV.scale(0.6, 0.4, 1.75); // Vertical oval car
 
         const state = launcherState;
-        const p1Char = state && state.characters ? state.characters[state.playerAssignments.p1] : {shape: 'blaze', color: 0x00f0ff};
-        const p2Char = state && state.characters ? state.characters[state.playerAssignments.p2] : {shape: 'glitch', color: 0xffbb00};
-        const p3Char = state && state.characters ? state.characters[state.playerAssignments.p3] : {shape: 'wave', color: 0x39ff14};
-        const p4Char = state && state.characters ? state.characters[state.playerAssignments.p4] : {shape: 'shadow', color: 0xb026ff};
+        const p1Char = state && state.characters ? state.characters[state.playerAssignments.p1] : {shape: 'bumpo', color: 0x00f0ff};
+        const p2Char = state && state.characters ? state.characters[state.playerAssignments.p2] : {shape: 'zippy', color: 0xffbb00};
+        const p3Char = state && state.characters ? state.characters[state.playerAssignments.p3] : {shape: 'puddle', color: 0x39ff14};
+        const p4Char = state && state.characters ? state.characters[state.playerAssignments.p4] : {shape: 'sly', color: 0xb026ff};
 
         const createPaddle = (carGeo, mat, shape, color, rotY) => {
             const group = new THREE.Group();

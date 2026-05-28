@@ -80,10 +80,10 @@ export const launcherState = {
     selectedGame: null,
     selectedArena: null,
     characters: [
-        { id: 'blaze', name: 'Blaze', shape: 'blaze', color: 0xff3333, hex: '#ff3333' },
-        { id: 'glitch', name: 'Glitch', shape: 'glitch', color: 0x39ff14, hex: '#39ff14' },
-        { id: 'wave', name: 'Wave', shape: 'wave', color: 0x00f0ff, hex: '#00f0ff' },
-        { id: 'shadow', name: 'Shadow', shape: 'shadow', color: 0xb026ff, hex: '#b026ff' }
+        { id: 'bumpo', name: 'Bumpo', shape: 'bumpo', color: 0xffdd00, hex: '#ffdd00' }, // Yellow for T-shirt
+        { id: 'zippy', name: 'Zippy', shape: 'zippy', color: 0xff0000, hex: '#ff0000' }, // Red for cap
+        { id: 'puddle', name: 'Puddle', shape: 'puddle', color: 0x2255ff, hex: '#2255ff' }, // Blue for overalls
+        { id: 'sly', name: 'Sly', shape: 'sly', color: 0x117733, hex: '#117733' }       // Green for hoodie
     ],
     playerAssignments: {
         p1: 0,
