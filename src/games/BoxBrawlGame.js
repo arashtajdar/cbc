@@ -1,3 +1,8 @@
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
+import * as CharacterBuilder from "../components/CharacterBuilder.js";
+
 /**
  * CRATE CRUSH gameplay logic
  * Standalone Three.js minigame class for "Crate Crush".
@@ -11,9 +16,8 @@
  * - Dynamic HUD and Victory/Game-over templates
  */
 
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-class CrateCrushGame {
+export default class BoxBrawlGame {
     constructor(containerId, playerColor) {
         this.containerId = containerId || 'canvas-container';
         this.playerColor = playerColor !== undefined ? playerColor : 0xff3333;
@@ -33,12 +37,10 @@ class CrateCrushGame {
         this.crateSpawnInterval = 3.0;
 
         this.spacePressedLastFrame = false;
-
-        this.setup();
     }
 
-    setup() {
-        const engine = window.engine;
+    init() {
+        const engine = SceneManager;
         if (!engine) {
             console.error('CrateCrush: engine.js not found in global context!');
             return;
@@ -112,7 +114,7 @@ class CrateCrushGame {
     }
 
     spawnPlayers() {
-        const state = window.launcherState;
+        const state = launcherState;
         const assignments = state.playerAssignments;
         const chars = state.characters;
 
@@ -134,7 +136,7 @@ class CrateCrushGame {
             const pColor = isP1 ? this.playerColor : charData.color;
 
             let meshY = 0;
-            const mesh = window.createArticulatedCharacter(charData.shape, pColor);
+            const mesh = CharacterBuilder.create(charData.shape, pColor);
             mesh.position.set(pos.x, meshY, pos.z);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -422,7 +424,7 @@ class CrateCrushGame {
                 if (c.indicator) {
                     c.indicator.rotation.z += 1.2 * dt;
                     c.indicator.material.opacity =
-                        0.35 + Math.sin(window.engine.clock.getElapsedTime() * 12.0) * 0.2;
+                        0.35 + Math.sin(SceneManager.clock.getElapsedTime() * 12.0) * 0.2;
                 }
 
                 // Check landing
@@ -598,8 +600,11 @@ class CrateCrushGame {
 
             ai.throwCooldown -= dt;
 
+            let diffSetting = launcherState?.aiDifficulty || 'normal';
+            let speedMult = diffSetting === 'easy' ? 0.7 : (diffSetting === 'hard' ? 1.3 : 1.0);
+            
             // Speed reduction while carrying
-            const speed = ai.carryingCrate ? 6.3 : 9.0;
+            const speed = (ai.carryingCrate ? 6.3 : 9.0) * speedMult;
 
             if (!ai.carryingCrate) {
                 // Find closest grounded crate
@@ -635,7 +640,8 @@ class CrateCrushGame {
                         target.state = 'lifted';
                         target.carryPlayer = ai;
                         ai.carryingCrate = target;
-                        ai.throwCooldown = 0.6 + Math.random() * 0.7; // delay before launch
+                        let liftDelayMult = diffSetting === 'easy' ? 1.5 : (diffSetting === 'hard' ? 0.5 : 1.0);
+                        ai.throwCooldown = (0.6 + Math.random() * 0.7) * liftDelayMult; // delay before launch
                     }
                 } else {
                     // Wander randomly
@@ -677,7 +683,8 @@ class CrateCrushGame {
                         ai.mesh.rotation.y = ai.facingAngle;
 
                         this.throwCrate(ai);
-                        ai.throwCooldown = 1.0 + Math.random() * 1.5;
+                        let throwDelayMult = diffSetting === 'easy' ? 1.5 : (diffSetting === 'hard' ? 0.5 : 1.0);
+                        ai.throwCooldown = (1.0 + Math.random() * 1.5) * throwDelayMult;
                         ai.wanderTarget = null;
                     }
                 }
@@ -960,11 +967,11 @@ class CrateCrushGame {
                 if (p.lastPosition) {
                     const dist = p.mesh.position.distanceTo(p.lastPosition);
                     const speed = dist / dt;
-                    if (window.animateArticulatedCharacter) {
-                        window.animateArticulatedCharacter(
+                    if (CharacterBuilder.animate) {
+                        CharacterBuilder.animate(
                             p.mesh,
                             speed,
-                            window.engine.clock.getElapsedTime()
+                            SceneManager.clock.getElapsedTime()
                         );
                     }
                 }
@@ -1033,7 +1040,7 @@ class CrateCrushGame {
 
     destroy() {
         if (this.arenaGroup) {
-            window.engine.scene.remove(this.arenaGroup);
+            SceneManager.scene.remove(this.arenaGroup);
             this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
@@ -1047,7 +1054,7 @@ class CrateCrushGame {
             this.arenaGroup = null;
         }
 
-        window.engine.updateCallbacks = [];
+        SceneManager.updateCallbacks = [];
 
         const hud = document.getElementById('cratecrush-hud');
         if (hud) hud.remove();
@@ -1057,5 +1064,5 @@ class CrateCrushGame {
     }
 }
 
-// Expose CrateCrushGame globally
-window.CrateCrushGame = CrateCrushGame;
+// Expose BoxBrawlGame globally
+

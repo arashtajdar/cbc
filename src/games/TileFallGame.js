@@ -1,15 +1,18 @@
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
 
-export class SkyHighGame {
+
+export export default class TileFallGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
 
-        window.SkyHighGame = this.constructor;
+        window.TileFallGame = this.constructor;
 
-        this.scene = window.engine.scene;
-        this.camera = window.engine.camera;
-        this.renderer = window.engine.renderer;
+        this.scene = SceneManager.scene;
+        this.camera = SceneManager.camera;
+        this.renderer = SceneManager.renderer;
 
         this.group = new THREE.Group();
         this.scene.add(this.group);
@@ -27,7 +30,7 @@ export class SkyHighGame {
         this.createPlayers();
 
         this.updateCallbackId =
-            window.engine.updateCallbacks.push((dt, time) => {
+            SceneManager.updateCallbacks.push((dt, time) => {
                 // Usually update is called directly by engine if window.activeGame == this
             }) - 1;
 
@@ -359,8 +362,10 @@ export class SkyHighGame {
             );
             if (dir.length() > 0.5) {
                 dir.normalize();
-                p.velocity.x = dir.x * p.speed * 0.8;
-                p.velocity.z = dir.z * p.speed * 0.8;
+                let diff = launcherState?.aiDifficulty || 'normal';
+                let mult = diff === 'easy' ? 0.5 : (diff === 'hard' ? 1.05 : 0.8);
+                p.velocity.x = dir.x * p.speed * mult;
+                p.velocity.z = dir.z * p.speed * mult;
             } else {
                 p.velocity.x = 0;
                 p.velocity.z = 0;
@@ -441,7 +446,7 @@ export class SkyHighGame {
 
     destroy() {
         if (this.updateCallbackId !== undefined) {
-            window.engine.updateCallbacks.splice(this.updateCallbackId, 1);
+            SceneManager.updateCallbacks.splice(this.updateCallbackId, 1);
         }
 
         this.group.traverse(child => {
@@ -464,4 +469,4 @@ export class SkyHighGame {
     }
 }
 
-window.SkyHighGame = SkyHighGame;
+

@@ -1,7 +1,20 @@
+export const inputs = {
+    w: false,
+    a: false,
+    s: false,
+    d: false,
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false,
+    Space: false
+};
+
+export function setupInputHandling() {
 /**
  * Sets up global input event handlers
  */
-window.setupInputHandling = function () {
+
     const keyMap = {
         KeyW: 'w',
         w: 'w',
@@ -25,8 +38,8 @@ window.setupInputHandling = function () {
 
     window.addEventListener('keydown', e => {
         const key = keyMap[e.code] || keyMap[e.key];
-        if (key && window.engine.inputs[key] !== undefined) {
-            window.engine.inputs[key] = true;
+        if (key && inputs[key] !== undefined) {
+            inputs[key] = true;
 
             // Dispatch dynamic UI update event
             window.dispatchEvent(
@@ -42,8 +55,8 @@ window.setupInputHandling = function () {
 
     window.addEventListener('keyup', e => {
         const key = keyMap[e.code] || keyMap[e.key];
-        if (key && window.engine.inputs[key] !== undefined) {
-            window.engine.inputs[key] = false;
+        if (key && inputs[key] !== undefined) {
+            inputs[key] = false;
 
             // Dispatch dynamic UI update event
             window.dispatchEvent(

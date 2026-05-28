@@ -1,6 +1,6 @@
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-window.createArticulatedCharacter = function (shape, color) {
+export function create (shape, color) {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({
         color: color,
@@ -126,7 +126,7 @@ window.createArticulatedCharacter = function (shape, color) {
     return group;
 };
 
-window.animateArticulatedCharacter = function (group, velocity, time) {
+export function animate (group, velocity, time) {
     if (!group || !group.userData.armL) return;
     const speed = Math.min(velocity, 15.0);
     if (speed > 0.1) {

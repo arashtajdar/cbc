@@ -33,10 +33,10 @@
             <div class="main-subtitle">Mojar Games Studio Launcher</div>
             
             <div class="menu-btn-container">
-                <button onclick="window.transitionToState('GAME_SELECT')" class="menu-btn primary-btn">
+                <button id="btn-play-arena" class="menu-btn primary-btn">
                     Play Arena
                 </button>
-                <button onclick="window.toggleSettingsModal(true)" class="menu-btn">
+                <button id="btn-open-settings" class="menu-btn">
                     Settings
                 </button>
                 <button id="exit-btn" class="menu-btn disabled-btn" onclick="if(window.electronAPI){ window.electronAPI.quitApp(); }">
@@ -56,6 +56,18 @@
                 <span class="settings-label">Master Volume</span>
                 <div class="settings-control">
                     <input type="range" id="setting-volume" min="0" max="100" value="80">
+                </div>
+            </div>
+            
+            <!-- AI Difficulty Setting -->
+            <div class="settings-row">
+                <span class="settings-label">AI Difficulty</span>
+                <div class="settings-control">
+                    <select id="setting-difficulty">
+                        <option value="easy">Easy</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
                 </div>
             </div>
             
@@ -86,7 +98,7 @@
                 Action: Spacebar (Shoot in Dragon Drop / Power Charge in Ballistix)
             </div>
             
-            <button onclick="window.toggleSettingsModal(false)" class="menu-btn" style="margin-top: 15px;">
+            <button id="btn-close-settings" class="menu-btn" style="margin-top: 15px;">
                 Back
             </button>
         </div>
@@ -103,18 +115,18 @@
             <!-- Dynamic Grid loaded from Registry -->
             <div id="launcher-games-grid" class="games-grid"></div>
             
-            <button onclick="window.transitionToState('MAIN_MENU')" class="menu-btn" style="width: 280px; margin-top: 10px;">
+            <button id="btn-back-main-menu" class="menu-btn" style="width: 280px; margin-top: 10px;">
                 ◀ Back to Main Menu
             </button>
         </div>
     </div>
 
     <!-- Locked Game Warning Modal -->
-    <div id="locked-modal" class="modal-overlay" onclick="window.closeLockedModal()">
-        <div class="locked-modal-content" onclick="event.stopPropagation()">
+    <div id="locked-modal" class="modal-overlay">
+        <div class="locked-modal-content" >
             <div class="locked-modal-title">Arena Locked</div>
             <p class="locked-modal-text">Minigame Locked: Under Development by Mojar Games</p>
-            <button onclick="window.closeLockedModal()" class="menu-btn" style="margin: 0 auto; width: 120px; padding: 10px;">
+            <button id="btn-close-locked" class="menu-btn" style="margin: 0 auto; width: 120px; padding: 10px;">
                 OK
             </button>
         </div>
@@ -132,11 +144,11 @@
                     <div class="slot-header">Player 1</div>
                     <div class="slot-type human">Human</div>
                     <div class="vertical-cycle-container">
-                        <button class="vertical-cycle-btn" onclick="window.cyclePlayer1Character(-1)">▲</button>
+                        <button id="btn-cycle-prev" class="vertical-cycle-btn">▲</button>
                         <div class="char-list-vertical" id="p1-char-list">
                             <!-- Populated dynamically -->
                         </div>
-                        <button class="vertical-cycle-btn" onclick="window.cyclePlayer1Character(1)">▼</button>
+                        <button id="btn-cycle-next" class="vertical-cycle-btn">▼</button>
                     </div>
                 </div>
 
@@ -177,10 +189,10 @@
             
             <!-- Controls -->
             <div style="display: flex; gap: 20px; width: 100%; justify-content: center; margin-top: 10px;">
-                <button onclick="window.transitionToState('GAME_SELECT')" class="menu-btn" style="width: 250px;">
+                <button id="btn-back-game-select" class="menu-btn" style="width: 250px;">
                     ◀ Back to Selection
                 </button>
-                <button id="btn-lockin-continue" onclick="window.lockInPlayer1()" class="menu-btn primary-btn" style="width: 250px;">
+                <button id="btn-lockin-continue"  class="menu-btn primary-btn" style="width: 250px;">
                     Lock In Champion
                 </button>
             </div>
@@ -198,10 +210,10 @@
             </div>
             
             <div style="display: flex; gap: 20px; width: 100%; justify-content: center; margin-top: 20px;">
-                <button onclick="window.transitionToState('CHAR_SELECT')" class="menu-btn" style="width: 250px;">
+                <button id="btn-back-char-select" class="menu-btn" style="width: 250px;">
                     ◀ Back to Champion Select
                 </button>
-                <button onclick="window.transitionToState('GAMEPLAY')" class="menu-btn primary-btn" style="width: 250px;" id="btn-start-match">
+                <button  class="menu-btn primary-btn" style="width: 250px;" id="btn-start-match">
                     Start Match ▶
                 </button>
             </div>
@@ -272,7 +284,7 @@
     </div>
 
     <!-- Small Exit Button at Bottom -->
-    <button id="bottom-exit-btn" onclick="window.exitToLauncher()" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255, 0, 127, 0.15); border: 1px solid rgba(255, 0, 127, 0.3); color: #ff007f; border-radius: 12px; width: 150px; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; z-index: 1000; cursor: pointer; display: none;">&#9664; Exit to Launcher</button>
+    <button id="bottom-exit-btn"  style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255, 0, 127, 0.15); border: 1px solid rgba(255, 0, 127, 0.3); color: #ff007f; border-radius: 12px; width: 150px; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; z-index: 1000; cursor: pointer; display: none;">&#9664; Exit to Launcher</button>
 
     <!-- Keyboard Visualizer Panel HUD -->
     <div class="control-panel hud" style="display: none;">
@@ -299,23 +311,8 @@
             <div class="space-container">
                 <div class="key-indicator space" id="key-space">Spacebar</div>
             </div>
-    <!-- Three.js Setup module loading -->
-    <script src="./js/LauncherState.js"></script>
-    <script src="./js/InputManager.js"></script>
-    <script src="./js/UIManager.js"></script>
-    <script type="module" src="./js/PreviewRenderer.js"></script>
-    <script type="module" src="./js/engine.js"></script>
-    <script type="module" src="./js/CharacterBuilder.js"></script>
-    <script type="module" src="./js/games/ballistix.js"></script>
-    <script type="module" src="./js/games/dragondrop.js"></script>
-    <script type="module" src="./js/games/cratecrush.js"></script>
-    <script type="module" src="./js/games/polarpush.js"></script>
-    <script type="module" src="./js/games/pogopandemonium.js"></script>
-    <script type="module" src="./js/games/tankmayhem.js"></script>
-    <script type="module" src="./js/games/ringruckus.js"></script>
-    <script type="module" src="./js/games/skyhigh.js"></script>
-    <script type="module" src="./js/games/toxictrap.js"></script>
-    <script type="module" src="./js/games/meltdown.js"></script>
+    <!-- Application Bootstrapper -->
+    <script type="module" src="./src/main.js"></script>
 
     <!-- Key HUD linking script -->
     <script>

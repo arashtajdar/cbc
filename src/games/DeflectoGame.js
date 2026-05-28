@@ -1,6 +1,11 @@
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
+import * as CharacterBuilder from "../components/CharacterBuilder.js";
+
 /**
  * BALLISTIX GAMEPLAY LOGIC (CHAOS MULTIBALL EDITION)
- * Implements the BallistixGame class to run a 4-sided 3D isometric breakout/pong style game.
+ * Implements the DeflectoGame class to run a 4-sided 3D isometric breakout/pong style game.
  *
  * Features:
  * - 1 Human Player Paddle (Bottom, Cyan) controlled via WASD / Arrows
@@ -11,13 +16,15 @@
  * - Custom dynamic overlay notifications for score milestones and spawn events
  */
 
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
 // --- CONFIGURATION ---
 const aiFlawRate = 0.3; // 30% chance for AI to make a human-like flaw (lag, standstill, or misdirection)
 
-class BallistixGame {
-    constructor() {
+export default class DeflectoGame {
+    constructor(containerId, playerColor, arenaId) {
+        this.containerId = containerId;
+        this.playerColor = playerColor;
+        this.arenaId = arenaId;
         this.score = 0;
         this.lives = {
             player: 15,
@@ -60,7 +67,7 @@ class BallistixGame {
         this.paddleY = 18; // Horiz paddles Z offset (+/- 18)
         this.paddleXOffset = 13.5; // Vert paddles X offset (+/- 13.5)
 
-        this.paddleWidth = 3.5;
+        this.paddleWidth = 7.0;
         this.ballRadius = 0.6;
 
         // Positions
@@ -94,18 +101,16 @@ class BallistixGame {
             left: { state: 'normal', timer: 0.0 },
             right: { state: 'normal', timer: 0.0 }
         };
-
-        this.setup();
     }
 
     /**
      * Initializes all 3D assets and registers the update loop
      */
-    setup() {
+    init() {
         if (this.arenaGroup) return; // Safety guard to prevent duplicate setup actions
-        const engine = window.engine;
+        const engine = SceneManager;
         if (!engine) {
-            console.error('BallistixGame: engine.js not found in global context!');
+            console.error('DeflectoGame: engine.js not found in global context!');
             return;
         }
 
@@ -165,11 +170,11 @@ class BallistixGame {
 
         // 5. Spawn 4 Paddles (1 Player, 3 AIs)
         const carGeoH = new THREE.SphereGeometry(1, 32, 16);
-        carGeoH.scale(1.75, 0.4, 0.6); // Horizontal oval car
+        carGeoH.scale(3.5, 0.8, 2.5); // Curvier, double-size horizontal oval
         const carGeoV = new THREE.SphereGeometry(1, 32, 16);
-        carGeoV.scale(0.6, 0.4, 1.75); // Vertical oval car
+        carGeoV.scale(2.5, 0.8, 3.5); // Curvier, double-size vertical oval
 
-        const state = window.launcherState;
+        const state = launcherState;
         const p1Char = state && state.characters ? state.characters[state.playerAssignments.p1] : {shape: 'blaze', color: 0x00f0ff};
         const p2Char = state && state.characters ? state.characters[state.playerAssignments.p2] : {shape: 'glitch', color: 0xffbb00};
         const p3Char = state && state.characters ? state.characters[state.playerAssignments.p3] : {shape: 'wave', color: 0x39ff14};
@@ -182,10 +187,10 @@ class BallistixGame {
             carMesh.receiveShadow = true;
             group.add(carMesh);
 
-            if (window.createArticulatedCharacter) {
-                const char = window.createArticulatedCharacter(shape, color);
-                char.scale.set(0.6, 0.6, 0.6);
-                char.position.y = 0.35; // Sitting on top
+            if (CharacterBuilder.create) {
+                const char = CharacterBuilder.create(shape, color);
+                char.scale.set(1.8, 1.8, 1.8); // Triple the original 0.6 size
+                char.position.y = 0.8; // Sitting on top of taller car
                 if (char.userData.legL) char.userData.legL.rotation.x = -Math.PI / 2;
                 if (char.userData.legR) char.userData.legR.rotation.x = -Math.PI / 2;
                 if (char.userData.armL) char.userData.armL.rotation.x = Math.PI / 3;
@@ -401,9 +406,12 @@ class BallistixGame {
         const stateInfo = this.aiStates[side];
         stateInfo.timer -= dt;
 
+        let diffSetting = launcherState?.aiDifficulty || 'normal';
+        let dynamicFlawRate = diffSetting === 'easy' ? 0.6 : (diffSetting === 'hard' ? 0.05 : 0.3);
+
         if (stateInfo.timer <= 0) {
-            // Decide new behavior state based on aiFlawRate
-            if (Math.random() < aiFlawRate) {
+            // Decide new behavior state based on dynamicFlawRate
+            if (Math.random() < dynamicFlawRate) {
                 // Trigger a flaw! Lag/Stand still or move in the wrong direction
                 const flawTypes = ['still', 'wrong'];
                 stateInfo.state = flawTypes[Math.floor(Math.random() * flawTypes.length)];
@@ -425,7 +433,8 @@ class BallistixGame {
             moveDir = 0; // Stand still / lag
         }
 
-        const aiMovementSpeed = 17.5;
+        let speedMult = diffSetting === 'easy' ? 0.6 : (diffSetting === 'hard' ? 1.4 : 1.0);
+        const aiMovementSpeed = 17.5 * speedMult;
         let newPos = paddlePosition + moveDir * aiMovementSpeed * dt;
         newPos = Math.max(-paddleLimit, Math.min(paddleLimit, newPos));
 
@@ -1237,7 +1246,7 @@ class BallistixGame {
         const carGeoV = new THREE.SphereGeometry(1, 32, 16);
         carGeoV.scale(0.6, 0.4, 1.75); // Vertical oval car
 
-        const state = window.launcherState;
+        const state = launcherState;
         const p1Char = state && state.characters ? state.characters[state.playerAssignments.p1] : {shape: 'blaze', color: 0x00f0ff};
         const p2Char = state && state.characters ? state.characters[state.playerAssignments.p2] : {shape: 'glitch', color: 0xffbb00};
         const p3Char = state && state.characters ? state.characters[state.playerAssignments.p3] : {shape: 'wave', color: 0x39ff14};
@@ -1250,8 +1259,8 @@ class BallistixGame {
             carMesh.receiveShadow = true;
             group.add(carMesh);
 
-            if (window.createArticulatedCharacter) {
-                const char = window.createArticulatedCharacter(shape, color);
+            if (CharacterBuilder.create) {
+                const char = CharacterBuilder.create(shape, color);
                 char.scale.set(0.6, 0.6, 0.6);
                 char.position.y = 0.35; // Sitting on top
                 if (char.userData.legL) char.userData.legL.rotation.x = -Math.PI / 2;
@@ -1394,7 +1403,7 @@ class BallistixGame {
      */
     destroy() {
         if (this.arenaGroup) {
-            window.engine.scene.remove(this.arenaGroup);
+            SceneManager.scene.remove(this.arenaGroup);
             this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
@@ -1407,11 +1416,11 @@ class BallistixGame {
             });
             this.arenaGroup = null;
         }
-        window.engine.updateCallbacks = [];
+        SceneManager.updateCallbacks = [];
         const overlay = document.getElementById('game-over-overlay');
         if (overlay) overlay.remove();
     }
 }
 
-// Expose BallistixGame globally so engine.js can instantiate it
-window.BallistixGame = BallistixGame;
+// Expose DeflectoGame globally so engine.js can instantiate it
+

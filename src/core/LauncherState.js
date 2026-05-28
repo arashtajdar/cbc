@@ -1,5 +1,5 @@
 // THE 10 MINIGAME REGISTRY
-window.minigamesRegistry = [
+export const minigamesRegistry = [
     {
         id: 'deflecto',
         name: 'Deflecto',
@@ -74,32 +74,8 @@ window.minigamesRegistry = [
 ];
 
 // GLOBAL ENGINE & INPUT STATES
-window.engine = {
-    scene: null,
-    camera: null,
-    renderer: null,
-    container: null,
-    clock: null,
-    lights: {},
-    entities: {},
-    inputs: {
-        w: false,
-        a: false,
-        s: false,
-        d: false,
-        ArrowUp: false,
-        ArrowDown: false,
-        ArrowLeft: false,
-        ArrowRight: false,
-        Space: false
-    },
-    updateCallbacks: []
-};
-
-window.inputs = window.engine.inputs;
-
 // STATE MACHINE CONFIGURATION
-window.launcherState = {
+export const launcherState = {
     currentState: 'SPLASH',
     selectedGame: null,
     selectedArena: null,
@@ -114,17 +90,19 @@ window.launcherState = {
         p2: 1,
         p3: 2,
         p4: 3
-    }
+    },
+    aiDifficulty: 'normal'
 };
 
-window.saveLauncherState = function () {
+export function saveLauncherState () {
     if (typeof localStorage !== 'undefined') {
         try {
             const stateToSave = {
-                currentState: window.launcherState.currentState,
-                selectedGame: window.launcherState.selectedGame,
-                selectedArena: window.launcherState.selectedArena,
-                playerAssignments: window.launcherState.playerAssignments
+                currentState: launcherState.currentState,
+                selectedGame: launcherState.selectedGame,
+                selectedArena: launcherState.selectedArena,
+                playerAssignments: launcherState.playerAssignments,
+                aiDifficulty: launcherState.aiDifficulty
             };
             localStorage.setItem('launcherState', JSON.stringify(stateToSave));
         } catch (e) {

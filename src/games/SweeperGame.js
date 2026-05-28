@@ -1,15 +1,18 @@
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
 
-export class MeltDownGame {
+
+export export default class SweeperGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
 
-        window.MeltDownGame = this.constructor;
+        window.SweeperGame = this.constructor;
 
-        this.scene = window.engine.scene;
-        this.camera = window.engine.camera;
-        this.renderer = window.engine.renderer;
+        this.scene = SceneManager.scene;
+        this.camera = SceneManager.camera;
+        this.renderer = SceneManager.renderer;
 
         this.group = new THREE.Group();
         this.scene.add(this.group);
@@ -41,7 +44,7 @@ export class MeltDownGame {
         this.createPlayers();
 
         this.updateCallbackId =
-            window.engine.updateCallbacks.push((dt, time) => {
+            SceneManager.updateCallbacks.push((dt, time) => {
                 // Wait for activeGame update
             }) - 1;
 
@@ -395,10 +398,13 @@ export class MeltDownGame {
         const lowDistAhead = pPos.dot(lowNormal);
         const lowDistAlong = pPos.dot(lowDir);
 
+        let diff = launcherState?.aiDifficulty || 'normal';
+        let jumpDist = diff === 'easy' ? 1.8 : (diff === 'hard' ? 2.8 : 2.5);
+
         if (lowDistAlong > 0 && lowDistAhead > 0 && lowDistAhead < 5.0) {
             // Low beam is approaching within 5 units
             // AI should jump right before it hits
-            if (lowDistAhead < 2.5 && p.isGrounded) {
+            if (lowDistAhead < jumpDist && p.isGrounded) {
                 p.wantJump = true;
             }
         }
@@ -406,9 +412,11 @@ export class MeltDownGame {
         const highDistAhead = pPos.dot(highNormal);
         const highDistAlong = pPos.dot(highDir);
 
+        let duckDist = diff === 'easy' ? 2.5 : (diff === 'hard' ? 4.0 : 3.5);
+
         if (highDistAlong > 0 && highDistAhead > 0 && highDistAhead < 5.0) {
             // High beam approaching
-            if (highDistAhead < 3.5 && p.isGrounded) {
+            if (highDistAhead < duckDist && p.isGrounded) {
                 p.wantDuck = true;
                 p.moveDir.set(0, 0, 0); // Stop moving while ducking
             }
@@ -483,7 +491,7 @@ export class MeltDownGame {
 
     destroy() {
         if (this.updateCallbackId !== undefined) {
-            window.engine.updateCallbacks.splice(this.updateCallbackId, 1);
+            SceneManager.updateCallbacks.splice(this.updateCallbackId, 1);
         }
 
         window.removeEventListener('keydown', this.handleKeyDown);
@@ -509,4 +517,4 @@ export class MeltDownGame {
     }
 }
 
-window.MeltDownGame = MeltDownGame;
+

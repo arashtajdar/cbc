@@ -1,3 +1,8 @@
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
+import * as CharacterBuilder from "../components/CharacterBuilder.js";
+
 /**
  * POLAR PUSH gameplay logic
  * Standalone Three.js minigame class for "Polar Push".
@@ -12,9 +17,8 @@
  * - Custom glassmorphic HUD and victory/defeat screens.
  */
 
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-class PolarPushGame {
+export default class SlideOutGame {
     constructor(containerId, playerColor) {
         this.containerId = containerId || 'canvas-container';
         this.playerColor = playerColor !== undefined ? playerColor : 0xff3333;
@@ -30,12 +34,10 @@ class PolarPushGame {
 
         this.spacePressedLastFrame = false;
         this.originalCameraPos = null;
-
-        this.setup();
     }
 
-    setup() {
-        const engine = window.engine;
+    init() {
+        const engine = SceneManager;
         if (!engine) {
             console.error('PolarPush: engine.js not found in global context!');
             return;
@@ -142,7 +144,7 @@ class PolarPushGame {
     }
 
     spawnPlayers() {
-        const state = window.launcherState;
+        const state = launcherState;
         const assignments = state.playerAssignments;
         const chars = state.characters;
 
@@ -164,7 +166,7 @@ class PolarPushGame {
             const pColor = isP1 ? this.playerColor : charData.color;
 
             let meshY = 0;
-            const mesh = window.createArticulatedCharacter(charData.shape, pColor);
+            const mesh = CharacterBuilder.create(charData.shape, pColor);
             mesh.position.set(pos.x, meshY, pos.z);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -386,7 +388,7 @@ class PolarPushGame {
         }
 
         // 1. Bob and rotate decorative floes
-        const elapsed = window.engine.clock.getElapsedTime();
+        const elapsed = SceneManager.clock.getElapsedTime();
         this.decorFloes.forEach(floe => {
             floe.mesh.rotation.y += floe.rotSpeed * dt;
             floe.mesh.position.y =
@@ -480,11 +482,11 @@ class PolarPushGame {
             p.mesh.position.z += p.vz * dt;
 
             const currentSpeed = Math.sqrt(p.vx * p.vx + p.vz * p.vz);
-            if (window.animateArticulatedCharacter) {
-                window.animateArticulatedCharacter(
+            if (CharacterBuilder.animate) {
+                CharacterBuilder.animate(
                     p.mesh,
                     currentSpeed,
-                    window.engine.clock.getElapsedTime()
+                    SceneManager.clock.getElapsedTime()
                 );
             }
 
@@ -681,16 +683,19 @@ class PolarPushGame {
                         ai.facingAngle = Math.atan2(-dirZ, dirX);
                         ai.mesh.rotation.y = ai.facingAngle;
 
-                        const accel = 18.0 * dt; // walk towards target
+                        let diffSetting = launcherState?.aiDifficulty || 'normal';
+                        let accelMult = diffSetting === 'easy' ? 0.6 : (diffSetting === 'hard' ? 1.2 : 1.0);
+                        const accel = 18.0 * dt * accelMult; // walk towards target
                         ai.vx += dirX * accel;
                         ai.vz += dirZ * accel;
 
                         // Dash Ram check: if aligned and close enough, and random trigger chance is met
+                        let dashProb = diffSetting === 'easy' ? 0.02 : (diffSetting === 'hard' ? 0.15 : 0.06);
                         if (
                             dist > 3.0 &&
                             dist < 6.5 &&
                             ai.dashCooldown <= 0 &&
-                            Math.random() < 0.06
+                            Math.random() < dashProb
                         ) {
                             const dashSpeed = 26.0;
                             ai.vx = dirX * dashSpeed;
@@ -887,7 +892,7 @@ class PolarPushGame {
 
     destroy() {
         if (this.arenaGroup) {
-            window.engine.scene.remove(this.arenaGroup);
+            SceneManager.scene.remove(this.arenaGroup);
             this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
@@ -901,12 +906,12 @@ class PolarPushGame {
             this.arenaGroup = null;
         }
 
-        window.engine.updateCallbacks = [];
+        SceneManager.updateCallbacks = [];
 
         // Restore original camera
-        if (this.originalCameraPos && window.engine.camera) {
-            window.engine.camera.position.copy(this.originalCameraPos);
-            window.engine.camera.lookAt(0, 0, 0);
+        if (this.originalCameraPos && SceneManager.camera) {
+            SceneManager.camera.position.copy(this.originalCameraPos);
+            SceneManager.camera.lookAt(0, 0, 0);
         }
 
         const hud = document.getElementById('polarpush-hud');
@@ -917,6 +922,6 @@ class PolarPushGame {
     }
 }
 
-// Expose PolarPushGame globally
-window.PolarPushGame = PolarPushGame;
-export default PolarPushGame;
+// Expose SlideOutGame globally
+
+export default SlideOutGame;

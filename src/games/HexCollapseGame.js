@@ -1,15 +1,18 @@
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
 
-export class ToxicTrapGame {
+
+export export default class HexCollapseGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
 
-        window.ToxicTrapGame = this.constructor;
+        window.HexCollapseGame = this.constructor;
 
-        this.scene = window.engine.scene;
-        this.camera = window.engine.camera;
-        this.renderer = window.engine.renderer;
+        this.scene = SceneManager.scene;
+        this.camera = SceneManager.camera;
+        this.renderer = SceneManager.renderer;
 
         this.group = new THREE.Group();
         this.scene.add(this.group);
@@ -33,7 +36,7 @@ export class ToxicTrapGame {
         this.createPlayers();
 
         this.updateCallbackId =
-            window.engine.updateCallbacks.push((dt, time) => {
+            SceneManager.updateCallbacks.push((dt, time) => {
                 this.updateParticles(dt);
             }) - 1;
 
@@ -418,8 +421,10 @@ export class ToxicTrapGame {
             moveDir.normalize();
         }
 
-        p.velocity.x = moveDir.x * p.speed * 0.85; // AI slightly slower
-        p.velocity.z = moveDir.z * p.speed * 0.85;
+        let diff = launcherState?.aiDifficulty || 'normal';
+        let mult = diff === 'easy' ? 0.5 : (diff === 'hard' ? 1.1 : 0.85);
+        p.velocity.x = moveDir.x * p.speed * mult; // AI scaled by difficulty
+        p.velocity.z = moveDir.z * p.speed * mult;
     }
 
     updateParticles(dt) {
@@ -509,7 +514,7 @@ export class ToxicTrapGame {
 
     destroy() {
         if (this.updateCallbackId !== undefined) {
-            window.engine.updateCallbacks.splice(this.updateCallbackId, 1);
+            SceneManager.updateCallbacks.splice(this.updateCallbackId, 1);
         }
 
         this.group.traverse(child => {
@@ -541,4 +546,4 @@ export class ToxicTrapGame {
     }
 }
 
-window.ToxicTrapGame = ToxicTrapGame;
+

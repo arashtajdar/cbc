@@ -1,6 +1,10 @@
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
+
 /**
  * DRAGON DROP GAMEPLAY LOGIC
- * Implements the DragonDropGame class to run a jewel-collection and shooting game.
+ * Implements the ShrinkZoneGame class to run a jewel-collection and shooting game.
  *
  * Features:
  * - 1 Human Player Dragon (Box, Cyan) controlled via WASD / Arrows
@@ -11,10 +15,12 @@
  * - 90-second match limit with glassmorphic Victory / Game Over screen
  */
 
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-class DragonDropGame {
-    constructor() {
+export default class ShrinkZoneGame {
+    constructor(containerId, playerColor, arenaId) {
+        this.containerId = containerId;
+        this.playerColor = playerColor;
+        this.arenaId = arenaId;
         this.score = 0;
         this.currentMultiplier = 1;
         this.matchTimer = 0.0;
@@ -40,18 +46,16 @@ class DragonDropGame {
 
         // Spacebar debounce flag
         this.spacePressedLastFrame = false;
-
-        this.setup();
     }
 
     /**
      * Initializes all 3D assets and registers the update loop
      */
-    setup() {
+    init() {
         if (this.arenaGroup) return;
-        const engine = window.engine;
+        const engine = SceneManager;
         if (!engine) {
-            console.error('DragonDropGame: engine.js not found in global context!');
+            console.error('ShrinkZoneGame: engine.js not found in global context!');
             return;
         }
 
@@ -811,7 +815,7 @@ class DragonDropGame {
      */
     destroy() {
         if (this.arenaGroup) {
-            window.engine.scene.remove(this.arenaGroup);
+            SceneManager.scene.remove(this.arenaGroup);
             this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
@@ -824,7 +828,7 @@ class DragonDropGame {
             });
             this.arenaGroup = null;
         }
-        window.engine.updateCallbacks = [];
+        SceneManager.updateCallbacks = [];
         const hud = document.getElementById('dragondrop-hud');
         if (hud) hud.remove();
         const overlay = document.getElementById('game-over-overlay');
@@ -897,5 +901,5 @@ class DragonDropGame {
     }
 }
 
-// Expose DragonDropGame globally so engine.js/index.html can instantiate it
-window.DragonDropGame = DragonDropGame;
+// Expose ShrinkZoneGame globally so engine.js/index.html can instantiate it
+

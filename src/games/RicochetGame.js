@@ -1,3 +1,7 @@
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
+
 /**
  * TANK MAYHEM gameplay logic
  * Standalone Three.js minigame class for "Tank Mayhem".
@@ -10,9 +14,8 @@
  * - Destructible wall fractures and tank HP bars HUD tracking.
  */
 
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-class TankMayhemGame {
+export default class RicochetGame {
     constructor(containerId, playerColor) {
         this.containerId = containerId || 'canvas-container';
         this.playerColor = playerColor !== undefined ? playerColor : 0xff3333;
@@ -46,12 +49,10 @@ class TankMayhemGame {
         this.gridSize = 11;
         this.cellSize = 1.6;
         this.gridOffset = ((this.gridSize - 1) * this.cellSize) / 2; // 8.0
-
-        this.setup();
     }
 
-    setup() {
-        const engine = window.engine;
+    init() {
+        const engine = SceneManager;
         if (!engine) {
             console.error('TankMayhem: engine.js not found in global context!');
             return;
@@ -137,7 +138,7 @@ class TankMayhemGame {
     }
 
     spawnTanks() {
-        const state = window.launcherState;
+        const state = launcherState;
         const assignments = state.playerAssignments;
         const chars = state.characters;
 
@@ -570,8 +571,9 @@ class TankMayhemGame {
 
             if (ai.shootCooldown > 0) ai.shootCooldown -= dt;
 
-            // Move forward
-            const speed = 2.4;
+            let diffSetting = launcherState?.aiDifficulty || 'normal';
+            let speedMult = diffSetting === 'easy' ? 0.7 : (diffSetting === 'hard' ? 1.3 : 1.0);
+            const speed = 2.4 * speedMult;
             const dx = Math.cos(ai.facingAngle) * speed * dt;
             const dz = -Math.sin(ai.facingAngle) * speed * dt;
 
@@ -623,7 +625,8 @@ class TankMayhemGame {
 
                     if (hasLOS && ai.shootCooldown <= 0 && ai.activeBulletsCount < 3) {
                         this.shootBullet(ai);
-                        ai.shootCooldown = 1.4 + Math.random() * 1.0;
+                        let cooldownMult = diffSetting === 'easy' ? 1.5 : (diffSetting === 'hard' ? 0.6 : 1.0);
+                        ai.shootCooldown = (1.4 + Math.random() * 1.0) * cooldownMult;
                     }
                 }
             }
@@ -913,7 +916,7 @@ class TankMayhemGame {
 
     destroy() {
         if (this.arenaGroup) {
-            window.engine.scene.remove(this.arenaGroup);
+            SceneManager.scene.remove(this.arenaGroup);
             this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
@@ -927,12 +930,12 @@ class TankMayhemGame {
             this.arenaGroup = null;
         }
 
-        window.engine.updateCallbacks = [];
+        SceneManager.updateCallbacks = [];
 
         // Restore camera
-        if (this.originalCameraPos && window.engine.camera) {
-            window.engine.camera.position.copy(this.originalCameraPos);
-            window.engine.camera.lookAt(0, 0, 0);
+        if (this.originalCameraPos && SceneManager.camera) {
+            SceneManager.camera.position.copy(this.originalCameraPos);
+            SceneManager.camera.lookAt(0, 0, 0);
         }
 
         const hud = document.getElementById('tankmayhem-hud');
@@ -943,6 +946,6 @@ class TankMayhemGame {
     }
 }
 
-// Expose TankMayhemGame globally
-window.TankMayhemGame = TankMayhemGame;
-export default TankMayhemGame;
+// Expose RicochetGame globally
+
+export default RicochetGame;

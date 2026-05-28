@@ -1,14 +1,17 @@
+import { launcherState } from "../core/LauncherState.js";
+let playerPreviewsAnimationFrame = null;
+import { create, animate } from "./CharacterBuilder.js";
 import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-window.playerPreviews = {
+export const playerPreviews = {
     p1: { renderer: null, scene: null, camera: null, meshes: [], group: null },
     p2: { renderer: null, scene: null, camera: null, meshes: [], group: null },
     p3: { renderer: null, scene: null, camera: null, meshes: [], group: null },
     p4: { renderer: null, scene: null, camera: null, meshes: [], group: null }
 };
-window.playerPreviewsAnimationFrame = null;
 
-window.initCharPreviews = function () {
+
+export function initCharPreviews () {
     const players = ['p1', 'p2', 'p3', 'p4'];
 
     // Clear any existing previews
@@ -20,11 +23,11 @@ window.initCharPreviews = function () {
             canvases.forEach(c => c.remove());
         }
 
-        const preview = window.playerPreviews[pKey];
+        const preview = playerPreviews[pKey];
         if (preview && preview.renderer) {
             preview.renderer.dispose();
         }
-        window.playerPreviews[pKey] = {
+        playerPreviews[pKey] = {
             renderer: null,
             scene: null,
             camera: null,
@@ -33,9 +36,9 @@ window.initCharPreviews = function () {
         };
     });
 
-    if (window.playerPreviewsAnimationFrame) {
-        cancelAnimationFrame(window.playerPreviewsAnimationFrame);
-        window.playerPreviewsAnimationFrame = null;
+    if (playerPreviewsAnimationFrame) {
+        cancelAnimationFrame(playerPreviewsAnimationFrame);
+        
     }
 
     players.forEach(pKey => {
@@ -76,30 +79,30 @@ window.initCharPreviews = function () {
         const group = new THREE.Group();
         scene.add(group);
 
-        window.playerPreviews[pKey] = { renderer, scene, camera, meshes: [], group };
+        playerPreviews[pKey] = { renderer, scene, camera, meshes: [], group };
     });
 
-    window.buildPlayerPreviews();
+    buildPlayerPreviews();
 
     const clock = new THREE.Clock();
 
     function animatePlayerPreviews() {
-        window.playerPreviewsAnimationFrame = requestAnimationFrame(animatePlayerPreviews);
+        playerPreviewsAnimationFrame = requestAnimationFrame(animatePlayerPreviews);
         const elapsed = clock.getElapsedTime();
         const dt = Math.min(clock.getDelta(), 0.1);
 
         players.forEach(pKey => {
-            const preview = window.playerPreviews[pKey];
+            const preview = playerPreviews[pKey];
             if (!preview || !preview.renderer) return;
 
-            if (pKey !== 'p1' && !window.launcherState.p1LockedIn) {
+            if (pKey !== 'p1' && !launcherState.p1LockedIn) {
                 // Ensure background is cleared while waiting
                 preview.renderer.render(preview.scene, preview.camera);
                 return;
             }
 
-            const selectedIdx = window.launcherState.playerAssignments[pKey];
-            const numChars = window.launcherState.characters.length;
+            const selectedIdx = launcherState.playerAssignments[pKey];
+            const numChars = launcherState.characters.length;
             const prevIdx = selectedIdx - 1;
             const nextIdx = selectedIdx + 1;
 
@@ -170,11 +173,11 @@ window.initCharPreviews = function () {
     animatePlayerPreviews();
 };
 
-window.buildPlayerPreviews = function () {
+export function buildPlayerPreviews () {
     const players = ['p1', 'p2', 'p3', 'p4'];
 
     players.forEach(pKey => {
-        const preview = window.playerPreviews[pKey];
+        const preview = playerPreviews[pKey];
         if (!preview || !preview.renderer || !preview.group) return;
 
         // Clean up existing meshes
@@ -209,16 +212,16 @@ window.buildPlayerPreviews = function () {
         preview.meshes = [];
         preview.group.clear();
 
-        if (pKey !== 'p1' && !window.launcherState.p1LockedIn) {
+        if (pKey !== 'p1' && !launcherState.p1LockedIn) {
             return; // Leave empty until locked in
         }
 
-        const selectedIdx = window.launcherState.playerAssignments[pKey];
-        const numChars = window.launcherState.characters.length;
+        const selectedIdx = launcherState.playerAssignments[pKey];
+        const numChars = launcherState.characters.length;
         const prevIdx = selectedIdx - 1;
         const nextIdx = selectedIdx + 1;
 
-        window.launcherState.characters.forEach((charData, cIdx) => {
+        launcherState.characters.forEach((charData, cIdx) => {
             let initialY = 0;
             if (cIdx === prevIdx && prevIdx >= 0) initialY = 1.7;
             else if (cIdx === nextIdx && nextIdx < numChars) initialY = -1.7;
@@ -251,7 +254,7 @@ window.buildPlayerPreviews = function () {
             preview.group.add(ring);
 
             // 2. Character Geometry Setup
-            const charMesh = window.createArticulatedCharacter(charData.shape, charData.color);
+            const charMesh = create(charData.shape, charData.color);
             charMesh.scale.set(0.35, 0.35, 0.35);
             charMesh.position.set(xPos, initialY - 0.1, 0);
             preview.group.add(charMesh);
@@ -265,3 +268,10 @@ window.buildPlayerPreviews = function () {
         });
     });
 };
+
+export function stopPlayerPreviewsAnimation() {
+    if (playerPreviewsAnimationFrame) {
+        cancelAnimationFrame(playerPreviewsAnimationFrame);
+        playerPreviewsAnimationFrame = null;
+    }
+}

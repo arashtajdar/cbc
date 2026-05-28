@@ -1,3 +1,8 @@
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
+import * as CharacterBuilder from "../components/CharacterBuilder.js";
+
 /**
  * POGO PANDEMONIUM gameplay logic
  * Standalone Three.js minigame class for "Pogo Pandemonium".
@@ -13,9 +18,8 @@
  * - Glassmorphic game-over results.
  */
 
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-class PogoPandemoniumGame {
+export default class BounceClaimGame {
     constructor(containerId, playerColor) {
         this.containerId = containerId || 'canvas-container';
         this.playerColor = playerColor !== undefined ? playerColor : 0xff3333;
@@ -40,12 +44,10 @@ class PogoPandemoniumGame {
 
         this.spacePressedLastFrame = false;
         this.originalCameraPos = null;
-
-        this.setup();
     }
 
-    setup() {
-        const engine = window.engine;
+    init() {
+        const engine = SceneManager;
         if (!engine) {
             console.error('PogoPandemonium: engine.js not found in global context!');
             return;
@@ -114,7 +116,7 @@ class PogoPandemoniumGame {
     }
 
     spawnPlayers() {
-        const state = window.launcherState;
+        const state = launcherState;
         const assignments = state.playerAssignments;
         const chars = state.characters;
 
@@ -139,7 +141,7 @@ class PogoPandemoniumGame {
             // Assemble Compound Pogo Stick Character Group
             const pogoGroup = new THREE.Group();
 
-            const bodyMesh = window.createArticulatedCharacter(charData.shape, pColor);
+            const bodyMesh = CharacterBuilder.create(charData.shape, pColor);
             bodyMesh.position.y = 0.9;
             bodyMesh.scale.set(0.65, 0.65, 0.65); // Make it fit the pogo stick
             pogoGroup.add(bodyMesh);
@@ -172,24 +174,28 @@ class PogoPandemoniumGame {
 
             this.arenaGroup.add(pogoGroup);
 
-            this.players.push({
-                id: idx + 1,
-                name: idx === 0 ? 'Player 1' : `Opponent ${idx}`,
-                mesh: pogoGroup,
-                bodyMesh: bodyMesh,
-                color: pColor,
-                hex: isP1 ? '#' + pColor.toString(16).padStart(6, '0') : charData.hex,
-                isAI: idx > 0,
-                gridX: start.c,
-                gridZ: start.r,
-                targetGridX: start.c,
-                targetGridZ: start.r,
-                bounceTimer: 0.0,
-                bounceDuration: 0.55, // Jump cycle duration (0.55s)
-                stunTimer: 0.0,
-                score: 0,
-                facingAngle: idx === 0 ? 0 : Math.PI
-            });
+                let diffSetting = launcherState?.aiDifficulty || 'normal';
+                let aiBounceDuration = diffSetting === 'easy' ? 0.8 : (diffSetting === 'hard' ? 0.35 : 0.55);
+                
+                // Add the object to the array with dynamically computed bounce duration for AI
+                this.players.push({
+                    id: idx + 1,
+                    name: idx === 0 ? 'Player 1' : `Opponent ${idx}`,
+                    mesh: pogoGroup,
+                    bodyMesh: bodyMesh,
+                    color: pColor,
+                    hex: isP1 ? '#' + pColor.toString(16).padStart(6, '0') : charData.hex,
+                    isAI: idx > 0,
+                    gridX: start.c,
+                    gridZ: start.r,
+                    targetGridX: start.c,
+                    targetGridZ: start.r,
+                    bounceTimer: 0.0,
+                    bounceDuration: (idx > 0) ? aiBounceDuration : 0.55, // Jump cycle duration
+                    stunTimer: 0.0,
+                    score: 0,
+                    facingAngle: idx === 0 ? 0 : Math.PI
+                });
         });
     }
 
@@ -572,7 +578,7 @@ class PogoPandemoniumGame {
         }
 
         // Rotate items visual loop
-        const elapsed = window.engine.clock.getElapsedTime();
+        const elapsed = SceneManager.clock.getElapsedTime();
         this.items.forEach(item => {
             item.mesh.rotation.y += 1.8 * dt;
             if (item.type === 'boost') {
@@ -659,12 +665,12 @@ class PogoPandemoniumGame {
                 while (diff > Math.PI) diff -= Math.PI * 2;
                 p.mesh.rotation.y += diff * 0.3; // rotate smoothly
             }
-            if (window.animateArticulatedCharacter && p.bodyMesh) {
+            if (CharacterBuilder.animate && p.bodyMesh) {
                 const speed = dc !== 0 || dr !== 0 ? 10 : 0;
-                window.animateArticulatedCharacter(
+                CharacterBuilder.animate(
                     p.bodyMesh,
                     speed,
-                    window.engine.clock.getElapsedTime()
+                    SceneManager.clock.getElapsedTime()
                 );
             }
         });
@@ -898,7 +904,7 @@ class PogoPandemoniumGame {
 
     destroy() {
         if (this.arenaGroup) {
-            window.engine.scene.remove(this.arenaGroup);
+            SceneManager.scene.remove(this.arenaGroup);
             this.arenaGroup.traverse(object => {
                 if (object.geometry) object.geometry.dispose();
                 if (object.material) {
@@ -912,12 +918,12 @@ class PogoPandemoniumGame {
             this.arenaGroup = null;
         }
 
-        window.engine.updateCallbacks = [];
+        SceneManager.updateCallbacks = [];
 
         // Restore camera
-        if (this.originalCameraPos && window.engine.camera) {
-            window.engine.camera.position.copy(this.originalCameraPos);
-            window.engine.camera.lookAt(0, 0, 0);
+        if (this.originalCameraPos && SceneManager.camera) {
+            SceneManager.camera.position.copy(this.originalCameraPos);
+            SceneManager.camera.lookAt(0, 0, 0);
         }
 
         const hud = document.getElementById('pogopandemonium-hud');
@@ -928,6 +934,6 @@ class PogoPandemoniumGame {
     }
 }
 
-// Expose PogoPandemoniumGame globally
-window.PogoPandemoniumGame = PogoPandemoniumGame;
-export default PogoPandemoniumGame;
+// Expose BounceClaimGame globally
+
+export default BounceClaimGame;

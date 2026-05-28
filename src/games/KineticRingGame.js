@@ -1,16 +1,19 @@
-import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
+import * as THREE from "https://unpkg.com/three@0.128.0/build/three.module.js";
+import { SceneManager } from "../core/SceneManager.js";
+import { launcherState } from "../core/LauncherState.js";
 
-export class RingRuckusGame {
+
+export export default class KineticRingGame {
     constructor(containerId, p1Color) {
         this.containerId = containerId;
         this.p1Color = p1Color || 0xff3333;
 
         // Expose to window for engine to call
-        window.RingRuckusGame = this.constructor;
+        window.KineticRingGame = this.constructor;
 
-        this.scene = window.engine.scene;
-        this.camera = window.engine.camera;
-        this.renderer = window.engine.renderer;
+        this.scene = SceneManager.scene;
+        this.camera = SceneManager.camera;
+        this.renderer = SceneManager.renderer;
 
         this.group = new THREE.Group();
         this.scene.add(this.group);
@@ -32,7 +35,7 @@ export class RingRuckusGame {
 
         // Add to engine update loop
         this.updateCallbackId =
-            window.engine.updateCallbacks.push((dt, time) => {
+            SceneManager.updateCallbacks.push((dt, time) => {
                 // Usually update is called directly by engine if window.activeGame == this
                 // We'll rely on the main engine update loop for particles, etc.
                 this.updateParticles(dt);
@@ -262,10 +265,13 @@ export class RingRuckusGame {
             dirToTarget.lerp(dirToCenter, 0.8).normalize();
         }
 
-        p.velocity.add(dirToTarget.multiplyScalar(p.acceleration * dt * 0.8)); // AI slightly lower accel
+        let diffSetting = launcherState?.aiDifficulty || 'normal';
+        let accelMult = diffSetting === 'easy' ? 0.6 : (diffSetting === 'hard' ? 1.1 : 0.8);
+        p.velocity.add(dirToTarget.multiplyScalar(p.acceleration * dt * accelMult)); // AI slightly lower accel
 
         // Dash logic
-        if (nearestOpponent && minOppDist < 5 && p.dashReady) {
+        let dashDist = diffSetting === 'easy' ? 3 : (diffSetting === 'hard' ? 7 : 5);
+        if (nearestOpponent && minOppDist < dashDist && p.dashReady) {
             const myDistCenter = p.mesh.position.distanceTo(center);
             const dirToOpp = nearestOpponent.mesh.position.clone().sub(p.mesh.position).normalize();
 
@@ -464,7 +470,7 @@ export class RingRuckusGame {
 
     destroy() {
         if (this.updateCallbackId !== undefined) {
-            window.engine.updateCallbacks.splice(this.updateCallbackId, 1);
+            SceneManager.updateCallbacks.splice(this.updateCallbackId, 1);
         }
 
         this.group.traverse(child => {
@@ -489,4 +495,4 @@ export class RingRuckusGame {
 }
 
 // Make globally available
-window.RingRuckusGame = RingRuckusGame;
+
