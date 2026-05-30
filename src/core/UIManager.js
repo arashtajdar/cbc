@@ -407,6 +407,7 @@ export function launchSelectedMatch() {
     if (instructionsHud) instructionsHud.style.display = "block";
     if (statsHud) statsHud.style.display = "flex";
     if (bottomExitBtn) bottomExitBtn.style.display = "block";
+    if (ballistixHud) ballistixHud.style.display = "block";
 
     const p1Char = launcherState.characters[launcherState.playerAssignments.p1];
     const p2Char = launcherState.characters[launcherState.playerAssignments.p2];

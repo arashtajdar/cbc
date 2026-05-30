@@ -134,6 +134,12 @@ export default class DeflectoGame {
         this.arenaGroup.rotation.y = -Math.PI / 4;
         engine.scene.add(this.arenaGroup);
 
+        // Zoom in camera for gameplay (default is 30, 35, 30)
+        if (engine.camera) {
+            engine.camera.position.set(22, 26, 22);
+            engine.camera.lookAt(0, 0, 0);
+        }
+
         // 3. Spawn Floor Arena (3D box)
         const floorGeo = new THREE.BoxGeometry(this.arenaWidth, 0.4, this.arenaLength);
         const floorMat = new THREE.MeshStandardMaterial({
@@ -354,6 +360,7 @@ export default class DeflectoGame {
      * Displays a temporary animated notification overlay on the screen
      */
     showNotification(text, colorHex) {
+        return; // Disabled
         const notif = document.createElement('div');
         notif.textContent = text;
         notif.style.position = 'absolute';
@@ -457,6 +464,25 @@ export default class DeflectoGame {
                 if (this.walls[side]) {
                     this.walls[side].material.emissiveIntensity = 0.8 + this.wallFlash[side] * 1.7;
                     this.walls[side].material.opacity = 0.45 + this.wallFlash[side] * 0.35;
+                }
+            }
+
+            // Smoothly zoom/pan camera to focus on the winner in the center
+            if (SceneManager.camera) {
+                SceneManager.camera.position.lerp(new THREE.Vector3(10, 11, 10), dt * 2.0);
+                SceneManager.camera.lookAt(0, 0.4, 0);
+            }
+
+            if (this.winner) {
+                let winnerPaddle = null;
+                if (this.winner === 'player') winnerPaddle = this.paddle;
+                if (this.winner === 'top') winnerPaddle = this.topPaddle;
+                if (this.winner === 'left') winnerPaddle = this.leftPaddle;
+                if (this.winner === 'right') winnerPaddle = this.rightPaddle;
+
+                if (winnerPaddle) {
+                    winnerPaddle.position.lerp(new THREE.Vector3(0, 0.4, 0), dt * 2.5);
+                    winnerPaddle.rotation.y += dt * 4.0; // spin around
                 }
             }
             return;
@@ -639,42 +665,35 @@ export default class DeflectoGame {
 
             // Bottom Player Paddle (or Solid Wall)
             if (this.lives.player > 0) {
-                const paddleFrontBottom = this.paddleY - 0.6;
-                const paddleBackBottom = this.paddleY + 0.6;
-                if (ball.vz > 0) {
-                    if (
-                        ball.z + this.ballRadius >= paddleFrontBottom &&
-                        ball.z - this.ballRadius <= paddleBackBottom
-                    ) {
-                        if (
-                            ball.x + this.ballRadius >= this.paddleX - paddleHalfWidth &&
-                            ball.x - this.ballRadius <= this.paddleX + paddleHalfWidth
-                        ) {
-                            // Prevent stuck: reposition ball on front of paddle
-                            ball.z = paddleFrontBottom - this.ballRadius;
+                const dx = ball.x - this.paddleX;
+                const dz = ball.z - this.paddleY;
+                const rx = 3.5 + this.ballRadius;
+                const rz = 2.5 + this.ballRadius;
 
-                            // Curved Paddle Ball Deflection
-                            const dx = ball.x - this.paddleX;
-                            const r = Math.max(-1, Math.min(1, dx / paddleHalfWidth));
-                            const phi = r * (Math.PI / 4); // Curved normal rotated up to 45 degrees
-                            const nx = Math.sin(phi);
-                            const nz = -Math.cos(phi);
+                if ((dx * dx) / (rx * rx) + (dz * dz) / (rz * rz) <= 1.0) {
+                    let nx = dx / (rx * rx);
+                    let nz = dz / (rz * rz);
+                    const nLen = Math.sqrt(nx * nx + nz * nz);
+                    nx /= nLen;
+                    nz /= nLen;
 
-                            const vDot = ball.vx * nx + ball.vz * nz;
-                            if (vDot < 0) {
-                                let rx = ball.vx - 2 * vDot * nx;
-                                let rz = ball.vz - 2 * vDot * nz;
-                                const len = Math.sqrt(rx * rx + rz * rz) || 1;
-                                ball.speed = Math.min(ball.speed + 1.2, 38.0);
-                                ball.vx = (rx / len) * ball.speed;
-                                ball.vz = (rz / len) * ball.speed;
-                            }
+                    const angle = Math.atan2(dz * rx, dx * rz);
+                    ball.x = this.paddleX + rx * Math.cos(angle);
+                    ball.z = this.paddleY + rz * Math.sin(angle);
 
-                            if (this.paddle) this.paddle.scale.set(1.25, 0.7, 1.15);
-                            ball.mesh.material.emissiveIntensity = 2.0;
-                            this.createCollisionImpact(ball.x, ball.z, ballColor, 15);
-                        }
+                    const vDot = ball.vx * nx + ball.vz * nz;
+                    if (vDot < 0) {
+                        let rvx = ball.vx - 2 * vDot * nx;
+                        let rvz = ball.vz - 2 * vDot * nz;
+                        const len = Math.sqrt(rvx * rvx + rvz * rvz) || 1;
+                        ball.speed = Math.min(ball.speed + 1.2, 38.0);
+                        ball.vx = (rvx / len) * ball.speed;
+                        ball.vz = (rvz / len) * ball.speed;
                     }
+
+                    if (this.paddle) this.paddle.scale.set(1.25, 0.7, 1.15);
+                    ball.mesh.material.emissiveIntensity = 2.0;
+                    this.createCollisionImpact(ball.x, ball.z, ballColor, 15);
                 }
             } else {
                 // Bottom Solid Wall
@@ -688,42 +707,35 @@ export default class DeflectoGame {
 
             // Top AI Paddle (or Solid Wall)
             if (this.lives.top > 0) {
-                const paddleFrontTop = -this.paddleY + 0.6;
-                const paddleBackTop = -this.paddleY - 0.6;
-                if (ball.vz < 0) {
-                    if (
-                        ball.z - this.ballRadius <= paddleFrontTop &&
-                        ball.z + this.ballRadius >= paddleBackTop
-                    ) {
-                        if (
-                            ball.x + this.ballRadius >= this.topPaddleX - paddleHalfWidth &&
-                            ball.x - this.ballRadius <= this.topPaddleX + paddleHalfWidth
-                        ) {
-                            // Prevent stuck: reposition ball on front of paddle
-                            ball.z = paddleFrontTop + this.ballRadius;
+                const dx = ball.x - this.topPaddleX;
+                const dz = ball.z - (-this.paddleY);
+                const rx = 3.5 + this.ballRadius;
+                const rz = 2.5 + this.ballRadius;
 
-                            // Curved Paddle Ball Deflection
-                            const dx = ball.x - this.topPaddleX;
-                            const r = Math.max(-1, Math.min(1, dx / paddleHalfWidth));
-                            const phi = r * (Math.PI / 4); // Curved normal rotated up to 45 degrees
-                            const nx = Math.sin(phi);
-                            const nz = Math.cos(phi);
+                if ((dx * dx) / (rx * rx) + (dz * dz) / (rz * rz) <= 1.0) {
+                    let nx = dx / (rx * rx);
+                    let nz = dz / (rz * rz);
+                    const nLen = Math.sqrt(nx * nx + nz * nz);
+                    nx /= nLen;
+                    nz /= nLen;
 
-                            const vDot = ball.vx * nx + ball.vz * nz;
-                            if (vDot < 0) {
-                                let rx = ball.vx - 2 * vDot * nx;
-                                let rz = ball.vz - 2 * vDot * nz;
-                                const len = Math.sqrt(rx * rx + rz * rz) || 1;
-                                ball.speed = Math.min(ball.speed + 0.8, 38.0);
-                                ball.vx = (rx / len) * ball.speed;
-                                ball.vz = (rz / len) * ball.speed;
-                            }
+                    const angle = Math.atan2(dz * rx, dx * rz);
+                    ball.x = this.topPaddleX + rx * Math.cos(angle);
+                    ball.z = -this.paddleY + rz * Math.sin(angle);
 
-                            if (this.topPaddle) this.topPaddle.scale.set(1.25, 0.7, 1.15);
-                            ball.mesh.material.emissiveIntensity = 2.0;
-                            this.createCollisionImpact(ball.x, ball.z, ballColor, 12);
-                        }
+                    const vDot = ball.vx * nx + ball.vz * nz;
+                    if (vDot < 0) {
+                        let rvx = ball.vx - 2 * vDot * nx;
+                        let rvz = ball.vz - 2 * vDot * nz;
+                        const len = Math.sqrt(rvx * rvx + rvz * rvz) || 1;
+                        ball.speed = Math.min(ball.speed + 0.8, 38.0);
+                        ball.vx = (rvx / len) * ball.speed;
+                        ball.vz = (rvz / len) * ball.speed;
                     }
+
+                    if (this.topPaddle) this.topPaddle.scale.set(1.25, 0.7, 1.15);
+                    ball.mesh.material.emissiveIntensity = 2.0;
+                    this.createCollisionImpact(ball.x, ball.z, ballColor, 12);
                 }
             } else {
                 // Top Solid Wall
@@ -737,42 +749,35 @@ export default class DeflectoGame {
 
             // Left AI Paddle (or Solid Wall)
             if (this.lives.left > 0) {
-                const paddleFrontLeft = -this.paddleXOffset + 0.6;
-                const paddleBackLeft = -this.paddleXOffset - 0.6;
-                if (ball.vx < 0) {
-                    if (
-                        ball.x - this.ballRadius <= paddleFrontLeft &&
-                        ball.x + this.ballRadius >= paddleBackLeft
-                    ) {
-                        if (
-                            ball.z + this.ballRadius >= this.leftPaddleZ - paddleHalfWidth &&
-                            ball.z - this.ballRadius <= this.leftPaddleZ + paddleHalfWidth
-                        ) {
-                            // Prevent stuck: reposition ball on front of paddle
-                            ball.x = paddleFrontLeft + this.ballRadius;
+                const dx = ball.x - (-this.paddleXOffset);
+                const dz = ball.z - this.leftPaddleZ;
+                const rx = 2.5 + this.ballRadius;
+                const rz = 3.5 + this.ballRadius;
 
-                            // Curved Paddle Ball Deflection
-                            const dz = ball.z - this.leftPaddleZ;
-                            const r = Math.max(-1, Math.min(1, dz / paddleHalfWidth));
-                            const phi = r * (Math.PI / 4); // Curved normal rotated up to 45 degrees
-                            const nx = Math.cos(phi);
-                            const nz = Math.sin(phi);
+                if ((dx * dx) / (rx * rx) + (dz * dz) / (rz * rz) <= 1.0) {
+                    let nx = dx / (rx * rx);
+                    let nz = dz / (rz * rz);
+                    const nLen = Math.sqrt(nx * nx + nz * nz);
+                    nx /= nLen;
+                    nz /= nLen;
 
-                            const vDot = ball.vx * nx + ball.vz * nz;
-                            if (vDot < 0) {
-                                let rx = ball.vx - 2 * vDot * nx;
-                                let rz = ball.vz - 2 * vDot * nz;
-                                const len = Math.sqrt(rx * rx + rz * rz) || 1;
-                                ball.speed = Math.min(ball.speed + 0.8, 38.0);
-                                ball.vx = (rx / len) * ball.speed;
-                                ball.vz = (rz / len) * ball.speed;
-                            }
+                    const angle = Math.atan2(dz * rx, dx * rz);
+                    ball.x = -this.paddleXOffset + rx * Math.cos(angle);
+                    ball.z = this.leftPaddleZ + rz * Math.sin(angle);
 
-                            if (this.leftPaddle) this.leftPaddle.scale.set(1.15, 0.7, 1.25);
-                            ball.mesh.material.emissiveIntensity = 2.0;
-                            this.createCollisionImpact(ball.x, ball.z, ballColor, 12);
-                        }
+                    const vDot = ball.vx * nx + ball.vz * nz;
+                    if (vDot < 0) {
+                        let rvx = ball.vx - 2 * vDot * nx;
+                        let rvz = ball.vz - 2 * vDot * nz;
+                        const len = Math.sqrt(rvx * rvx + rvz * rvz) || 1;
+                        ball.speed = Math.min(ball.speed + 0.8, 38.0);
+                        ball.vx = (rvx / len) * ball.speed;
+                        ball.vz = (rvz / len) * ball.speed;
                     }
+
+                    if (this.leftPaddle) this.leftPaddle.scale.set(1.15, 0.7, 1.25);
+                        ball.mesh.material.emissiveIntensity = 2.0;
+                    this.createCollisionImpact(ball.x, ball.z, ballColor, 12);
                 }
             } else {
                 // Left Solid Wall
@@ -786,42 +791,35 @@ export default class DeflectoGame {
 
             // Right AI Paddle (or Solid Wall)
             if (this.lives.right > 0) {
-                const paddleFrontRight = this.paddleXOffset - 0.6;
-                const paddleBackRight = this.paddleXOffset + 0.6;
-                if (ball.vx > 0) {
-                    if (
-                        ball.x + this.ballRadius >= paddleFrontRight &&
-                        ball.x - this.ballRadius <= paddleBackRight
-                    ) {
-                        if (
-                            ball.z + this.ballRadius >= this.rightPaddleZ - paddleHalfWidth &&
-                            ball.z - this.ballRadius <= this.rightPaddleZ + paddleHalfWidth
-                        ) {
-                            // Prevent stuck: reposition ball on front of paddle
-                            ball.x = paddleFrontRight - this.ballRadius;
+                const dx = ball.x - this.paddleXOffset;
+                const dz = ball.z - this.rightPaddleZ;
+                const rx = 2.5 + this.ballRadius;
+                const rz = 3.5 + this.ballRadius;
 
-                            // Curved Paddle Ball Deflection
-                            const dz = ball.z - this.rightPaddleZ;
-                            const r = Math.max(-1, Math.min(1, dz / paddleHalfWidth));
-                            const phi = r * (Math.PI / 4); // Curved normal rotated up to 45 degrees
-                            const nx = -Math.cos(phi);
-                            const nz = Math.sin(phi);
+                if ((dx * dx) / (rx * rx) + (dz * dz) / (rz * rz) <= 1.0) {
+                    let nx = dx / (rx * rx);
+                    let nz = dz / (rz * rz);
+                    const nLen = Math.sqrt(nx * nx + nz * nz);
+                    nx /= nLen;
+                    nz /= nLen;
 
-                            const vDot = ball.vx * nx + ball.vz * nz;
-                            if (vDot < 0) {
-                                let rx = ball.vx - 2 * vDot * nx;
-                                let rz = ball.vz - 2 * vDot * nz;
-                                const len = Math.sqrt(rx * rx + rz * rz) || 1;
-                                ball.speed = Math.min(ball.speed + 0.8, 38.0);
-                                ball.vx = (rx / len) * ball.speed;
-                                ball.vz = (rz / len) * ball.speed;
-                            }
+                    const angle = Math.atan2(dz * rx, dx * rz);
+                    ball.x = this.paddleXOffset + rx * Math.cos(angle);
+                    ball.z = this.rightPaddleZ + rz * Math.sin(angle);
 
-                            if (this.rightPaddle) this.rightPaddle.scale.set(1.15, 0.7, 1.25);
-                            ball.mesh.material.emissiveIntensity = 2.0;
-                            this.createCollisionImpact(ball.x, ball.z, ballColor, 12);
-                        }
+                    const vDot = ball.vx * nx + ball.vz * nz;
+                    if (vDot < 0) {
+                        let rvx = ball.vx - 2 * vDot * nx;
+                        let rvz = ball.vz - 2 * vDot * nz;
+                        const len = Math.sqrt(rvx * rvx + rvz * rvz) || 1;
+                        ball.speed = Math.min(ball.speed + 0.8, 38.0);
+                        ball.vx = (rvx / len) * ball.speed;
+                        ball.vz = (rvz / len) * ball.speed;
                     }
+
+                    if (this.rightPaddle) this.rightPaddle.scale.set(1.15, 0.7, 1.25);
+                    ball.mesh.material.emissiveIntensity = 2.0;
+                    this.createCollisionImpact(ball.x, ball.z, ballColor, 12);
                 }
             } else {
                 // Right Solid Wall
@@ -841,26 +839,36 @@ export default class DeflectoGame {
             );
 
             // 4d. Out of Bounds Check (Remove ball from array and subtract life)
-            // Player Goal Miss (Bottom edge)
+            let ballRemoved = false;
+            
+            // Player Goal Miss
             if (this.lives.player > 0 && ball.z - this.ballRadius > halfLength + 1.0) {
                 this.deductLife('player', ball);
-                this.removeBallAt(i);
+                ballRemoved = true;
             }
             // Top AI Goal Miss
             else if (this.lives.top > 0 && ball.z + this.ballRadius < -halfLength - 1.0) {
                 this.deductLife('top', ball);
-                this.removeBallAt(i);
+                ballRemoved = true;
             }
             // Left AI Goal Miss
             else if (this.lives.left > 0 && ball.x + this.ballRadius < -halfWidth - 1.0) {
                 this.deductLife('left', ball);
-                this.removeBallAt(i);
+                ballRemoved = true;
             }
             // Right AI Goal Miss
             else if (this.lives.right > 0 && ball.x - this.ballRadius > halfWidth + 1.0) {
                 this.deductLife('right', ball);
-                this.removeBallAt(i);
+                ballRemoved = true;
             }
+
+            if (ballRemoved) {
+                if (this.balls[i] === ball) {
+                    this.removeBallAt(i);
+                }
+            }
+
+            if (this.gameOver) break; // Prevent crash and bypass rest of loop
         }
 
         // 5. If all balls are out of bounds, spawn a new one immediately to keep game active
@@ -1016,7 +1024,7 @@ export default class DeflectoGame {
         }
 
         if (paddleMesh) {
-            const paddleColor = paddleMesh.material.color.getHex();
+            const paddleColor = (paddleMesh.material && paddleMesh.material.color) ? paddleMesh.material.color.getHex() : 0xffffff;
             this.createCollisionImpact(
                 paddleMesh.position.x,
                 paddleMesh.position.z,
@@ -1024,10 +1032,28 @@ export default class DeflectoGame {
                 35
             );
 
-            this.arenaGroup.remove(paddleMesh);
-            paddleMesh.geometry.dispose();
-            paddleMesh.material.dispose();
+            this.safeDisposePaddle(paddleMesh);
         }
+    }
+
+    /**
+     * Safely disposes of a paddle mesh group and all of its subcomponents
+     */
+    safeDisposePaddle(paddleMesh) {
+        if (!paddleMesh) return;
+        if (this.arenaGroup) {
+            this.arenaGroup.remove(paddleMesh);
+        }
+        paddleMesh.traverse((child) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) {
+                    child.material.forEach(m => m.dispose());
+                } else {
+                    child.material.dispose();
+                }
+            }
+        });
     }
 
     /**
@@ -1101,7 +1127,14 @@ export default class DeflectoGame {
      * Triggers game over with Victory or Game Over banner
      */
     triggerGameOver(winner) {
+        if (this.gameOver) return;
         this.gameOver = true;
+        this.winner = winner;
+
+        // Remove all balls from screen immediately
+        while (this.balls.length > 0) {
+            this.removeBallAt(0);
+        }
 
         const existing = document.getElementById('game-over-overlay');
         if (existing) existing.remove();
@@ -1115,19 +1148,19 @@ export default class DeflectoGame {
         overlay.style.left = '0';
         overlay.style.width = '100%';
         overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(6, 8, 15, 0.7)';
-        overlay.style.backdropFilter = 'blur(12px)';
-        overlay.style.webkitBackdropFilter = 'blur(12px)';
+        overlay.style.backgroundColor = 'transparent'; // Completely transparent overlay
         overlay.style.display = 'flex';
         overlay.style.flexDirection = 'column';
         overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
+        overlay.style.justifyContent = 'flex-end'; // Align card to the bottom
+        overlay.style.paddingBottom = '50px'; // Spacing from bottom
+        overlay.style.boxSizing = 'border-box';
         overlay.style.zIndex = '100';
+        overlay.style.pointerEvents = 'none'; // Ignore clicks on background overlay
         overlay.style.opacity = '0';
         overlay.style.transition = 'opacity 0.8s ease';
 
         const titleColor = isPlayerVictory ? '#00f0ff' : '#ff007f';
-        const titleText = isPlayerVictory ? 'VICTORY' : 'GAME OVER';
         const glowColor = isPlayerVictory ? 'rgba(0, 240, 255, 0.6)' : 'rgba(255, 0, 127, 0.6)';
 
         const winnerNames = {
@@ -1139,14 +1172,14 @@ export default class DeflectoGame {
         const winnerName = winnerNames[winner] || 'No one';
 
         overlay.innerHTML = `
-            <div style="text-align: center; padding: 40px; border-radius: 24px; background: rgba(15, 18, 30, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1); max-width: 450px; width: 90%;">
-                <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 3rem; font-weight: 800; letter-spacing: 4px; color: ${titleColor}; text-shadow: 0 0 30px ${glowColor}; margin: 0 0 10px 0; text-transform: uppercase;">
-                    ${titleText}
+            <div style="text-align: center; padding: 25px 45px; border-radius: 24px; background: rgba(10, 13, 24, 0.85); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7); max-width: 450px; width: 90%; pointer-events: auto; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+                <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 2.2rem; font-weight: 800; letter-spacing: 3px; color: ${titleColor}; text-shadow: 0 0 20px ${glowColor}; margin: 0 0 5px 0; text-transform: uppercase;">
+                    ${winnerName} Wins!
                 </h2>
-                <p style="font-size: 1rem; color: #a0aec0; margin: 0 0 30px 0; letter-spacing: 1px;">
-                    ${isPlayerVictory ? 'You have defeated all AI opponents!' : `${winnerName} is the last survivor.`}
+                <p style="font-size: 0.95rem; color: #a0aec0; margin: 0 0 20px 0; letter-spacing: 0.5px;">
+                    ${isPlayerVictory ? 'You are the champion of the arena!' : `${winnerName} is the last survivor.`}
                 </p>
-                <button id="restart-btn" style="pointer-events: auto; cursor: pointer; background: linear-gradient(135deg, ${titleColor}, #8b00ff); border: none; color: white; padding: 14px 40px; font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; border-radius: 30px; box-shadow: 0 0 20px ${titleColor}44; transition: all 0.3s ease;">
+                <button id="restart-btn" style="cursor: pointer; background: linear-gradient(135deg, ${titleColor}, #8b00ff); border: none; color: white; padding: 12px 35px; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; border-radius: 25px; box-shadow: 0 0 15px ${titleColor}44; transition: all 0.3s ease;">
                     Restart Match
                 </button>
             </div>
@@ -1182,6 +1215,12 @@ export default class DeflectoGame {
             setTimeout(() => overlay.remove(), 800);
         }
 
+        // Reset camera position for gameplay
+        if (SceneManager.camera) {
+            SceneManager.camera.position.set(22, 26, 22);
+            SceneManager.camera.lookAt(0, 0, 0);
+        }
+
         for (let i = this.balls.length - 1; i >= 0; i--) {
             this.removeBallAt(i);
         }
@@ -1196,27 +1235,19 @@ export default class DeflectoGame {
         }
 
         if (this.paddle) {
-            this.arenaGroup.remove(this.paddle);
-            this.paddle.geometry.dispose();
-            this.paddle.material.dispose();
+            this.safeDisposePaddle(this.paddle);
             this.paddle = null;
         }
         if (this.topPaddle) {
-            this.arenaGroup.remove(this.topPaddle);
-            this.topPaddle.geometry.dispose();
-            this.topPaddle.material.dispose();
+            this.safeDisposePaddle(this.topPaddle);
             this.topPaddle = null;
         }
         if (this.leftPaddle) {
-            this.arenaGroup.remove(this.leftPaddle);
-            this.leftPaddle.geometry.dispose();
-            this.leftPaddle.material.dispose();
+            this.safeDisposePaddle(this.leftPaddle);
             this.leftPaddle = null;
         }
         if (this.rightPaddle) {
-            this.arenaGroup.remove(this.rightPaddle);
-            this.rightPaddle.geometry.dispose();
-            this.rightPaddle.material.dispose();
+            this.safeDisposePaddle(this.rightPaddle);
             this.rightPaddle = null;
         }
 
@@ -1243,9 +1274,9 @@ export default class DeflectoGame {
         };
 
         const carGeoH = new THREE.SphereGeometry(1, 32, 16);
-        carGeoH.scale(1.75, 0.4, 0.6); // Horizontal oval car
+        carGeoH.scale(3.5, 0.8, 2.5); // Large horizontal oval car (matching init)
         const carGeoV = new THREE.SphereGeometry(1, 32, 16);
-        carGeoV.scale(0.6, 0.4, 1.75); // Vertical oval car
+        carGeoV.scale(2.5, 0.8, 3.5); // Large vertical oval car (matching init)
 
         const state = launcherState;
         const p1Char = state && state.characters ? state.characters[state.playerAssignments.p1] : {shape: 'bumpo', color: 0x00f0ff};
@@ -1262,8 +1293,8 @@ export default class DeflectoGame {
 
             if (CharacterBuilder.create) {
                 const char = CharacterBuilder.create(shape, color);
-                char.scale.set(0.6, 0.6, 0.6);
-                char.position.y = 0.35; // Sitting on top
+                char.scale.set(1.8, 1.8, 1.8); // Large character (matching init)
+                char.position.y = 0.8; // Sitting on top (matching init)
                 if (char.userData.legL) char.userData.legL.rotation.x = -Math.PI / 2;
                 if (char.userData.legR) char.userData.legR.rotation.x = -Math.PI / 2;
                 if (char.userData.armL) char.userData.armL.rotation.x = Math.PI / 3;
@@ -1416,6 +1447,11 @@ export default class DeflectoGame {
                 }
             });
             this.arenaGroup = null;
+        }
+        // Restore default camera position for other games
+        if (SceneManager.camera) {
+            SceneManager.camera.position.set(30, 35, 30);
+            SceneManager.camera.lookAt(0, 0, 0);
         }
         SceneManager.updateCallbacks = [];
         const overlay = document.getElementById('game-over-overlay');

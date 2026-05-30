@@ -27,7 +27,7 @@ export const SceneManager = {
         this.scene.fog = new THREE.FogExp2(0x0a0c14, 0.015);
 
         this.camera = new THREE.PerspectiveCamera(32, width / height, 0.1, 1000);
-        this.camera.position.set(45, 45, 45);
+        this.camera.position.set(30, 35, 30);
         this.camera.lookAt(0, 0, 0);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
